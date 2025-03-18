@@ -1,40 +1,82 @@
-<head>
-  <!-- LaTeX -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css"
-  />
-  <script
-    defer
-    src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"
-  ></script>
-  <script
-    defer
-    src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
-  ></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      renderMathInElement(document.body, {
-        delimiters: [
-          { left: "$$", right: "$$", display: true },
-          { left: "$", right: "$", display: false },
-        ],
+<!DOCTYPE html>
+<html>
+  <title>About</title>
+  <head>
+    <!-- LaTeX -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+          ],
+        });
       });
-    });
-  </script>
-  <!-- Dark Mode -->
-  <style>
-    body { background-color: white; color: black; }
-    .dark-mode { background-color: black; color: white; }
-  </style>
-  
-  <button id="darkModeToggle">🌙</button>
-  <script>
-    const toggle = document.getElementById("darkModeToggle");
-    toggle.addEventListener("click", function () {
-      document.body.classList.toggle("dark-mode");
-    });
-  </script>
-  <!-- Analytics -->
-  <script defer data-domain="oguzhanoztaskin.github.io" src="https://plausible.io/js/script.js"></script>
-</head>
+    </script>
+    <!-- Dark Mode -->
+    <style>
+      body {
+        background-color: white;
+        color: black;
+      }
+      .dark-mode {
+        background-color: black;
+        color: white;
+      }
+    </style>
+
+    <button id="darkModeToggle">🌙</button>
+    <script>
+      const toggle = document.getElementById("darkModeToggle");
+      toggle.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+      });
+    </script>
+    <!-- Analytics -->
+    <script
+      defer
+      data-domain="oguzhanoztaskin.github.io"
+      src="https://plausible.io/js/script.js"
+    ></script>
+  </head>
+
+  <body>
+    <h1>About</h1>
+    <p><small></small></p>
+    
+    <article class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">About</h1>
+  </header>
+
+  <div class="post-content">
+    <p>This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at <a href="https://jekyllrb.com/">jekyllrb.com</a></p>
+
+<p>You can find the source code for Minima at GitHub:
+<a href="https://github.com/jekyll">jekyll</a> /
+<a href="https://github.com/jekyll/minima">minima</a></p>
+
+<p>You can find the source code for Jekyll at GitHub:
+<a href="https://github.com/jekyll">jekyll</a> /
+<a href="https://github.com/jekyll/jekyll">jekyll</a></p>
+
+
+  </div>
+
+</article>
+
+  </body>
+</html>
