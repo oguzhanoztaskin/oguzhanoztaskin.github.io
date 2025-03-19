@@ -35,3 +35,4 @@ gem "http_parser.rb", "~> 0.6.0", :platforms => [:jruby]
 
 gem 'jekyll-sitemap'
 gem 'jekyll-paginate' 
+gem "kramdown-math-katex"
