@@ -35,14 +35,6 @@ plugins:
   - jekyll-sitemap
   - jekyll-paginate
 paginate: 5
-kramdown:
-  input: GFM
-  math_engine: katex
-  math_engine_opts:
-    katex_options:
-      throwOnError: false
-      displayMode: true  # Forces block math to display properly
-  syntax_highlighter: rouge
 
 # Exclude from processing.
 # The following items will not be processed, by default.
