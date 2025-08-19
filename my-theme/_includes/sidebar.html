@@ -1,0 +1,62 @@
+<!-- Sidebar -->
+<div class="sidebar">
+  <!-- Featured Tags Section -->
+  <div class="sidebar-section">
+    <h3 class="sidebar-heading">Featured Tags</h3>
+    <div class="sidebar-tags">
+      {%- assign featured_tags = site.tags | where_exp: "tag", "tag[1].size >= site.featured-condition-size" -%}
+      {%- if featured_tags.size > 0 -%}
+        {%- for tag in featured_tags limit: 8 -%}
+          <a href="{{ "/archive/" | relative_url }}#{{ tag[0] | slugify }}" class="sidebar-tag-link">
+            {{ tag[0] }}
+            <span class="tag-count">({{ tag[1].size }})</span>
+          </a>
+        {%- endfor -%}
+      {%- else -%}
+        {%- for tag in site.tags limit: 8 -%}
+          <a href="{{ "/archive/" | relative_url }}#{{ tag[0] | slugify }}" class="sidebar-tag-link">
+            {{ tag[0] }}
+            <span class="tag-count">({{ tag[1].size }})</span>
+          </a>
+        {%- endfor -%}
+      {%- endif -%}
+      {%- if site.tags.size > 8 -%}
+        <div class="see-all-tags">
+          <a href="{{ "/archive/" | relative_url }}" class="see-all-link">See all tags →</a>
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+
+  <!-- About Me Section -->
+  <div class="sidebar-section">
+    <h3 class="sidebar-heading">About Me</h3>
+    <div class="about-me-content">
+      {%- if site.avatar -%}
+        <div class="about-me-avatar">
+          <img src="{{ site.avatar | relative_url }}" alt="{{ site.title | escape }}" class="avatar-img" onerror="this.style.display='none'">
+        </div>
+      {%- endif -%}
+      <div class="about-me-text">
+        <p>I am a Master's student interested in cyber security - exploring SSL pinning bypasses, zero-knowledge proofs, and various security projects.</p>
+        <div class="about-me-links">
+          <a href="{{ "/about/" | relative_url }}" class="about-link">Learn more →</a>
+          <a href="mailto:{{ site.email }}" class="contact-link">Contact me</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Posts Section -->
+  <div class="sidebar-section">
+    <h3 class="sidebar-heading">Recent Posts</h3>
+    <div class="recent-posts">
+      {%- for post in site.posts limit: 5 -%}
+        <div class="recent-post-item">
+          <a href="{{ post.url | relative_url }}" class="recent-post-title">{{ post.title | escape }}</a>
+          <div class="recent-post-date">{{ post.date | date: "%b %-d, %Y" }}</div>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>

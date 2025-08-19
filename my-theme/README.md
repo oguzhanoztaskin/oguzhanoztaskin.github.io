@@ -37,7 +37,7 @@ Refers to files within the `_layouts` directory, that define the markup for your
   - `home.html` &mdash; The layout for your landing-page / home-page / index-page. [[More Info.](#home-layout)]
   - `page.html` &mdash; The layout for your documents that contain FrontMatter, but are not posts.
   - `post.html` &mdash; The layout for your posts.
-  - `tags.html` &mdash; The layout for a tags/archive page that displays posts filtered by tags. [[More Info.](#tags-layout)]
+  - `tags.html` &mdash; The layout for a tags/archive page that displays posts filtered by tags. [[More Info.](#archive-layout)]
 
 ### Includes
 
@@ -206,24 +206,24 @@ show_excerpts: true
 
 --
 
-### Tags Layout
+### Archive Layout
 
-The `tags.html` layout provides a comprehensive tag-based archive system for your posts. This layout creates an interactive page where visitors can:
+The `archive.html` layout provides a comprehensive tag-based archive system for your posts. This layout creates an interactive page where visitors can:
 
 - View all posts by default
 - Filter posts by clicking on tag filter buttons
 - Click on tags within individual post listings to filter by that tag
 - Navigate between different tag filters seamlessly
 
-#### Setting up a Tags Page
+#### Setting up an Archive Page
 
-To create a tags page, create a new markdown file (e.g., `tags.md`) in your site root:
+To create an archive page, create a new markdown file (e.g., `archive.md`) in your site root:
 
 ```yaml
 ---
-layout: tags
-title: Tags
-permalink: /tags/
+layout: archive
+title: Archive
+permalink: /archive/
 ---
 
 Browse posts by tags. Click on any tag to filter posts, or use "Show All" to see all posts.
@@ -243,18 +243,18 @@ tags: [technology, programming, jekyll]
 
 #### Navigation Integration
 
-To add the tags page to your site navigation, include it in your `_config.yml`:
+To add the archive page to your site navigation, include it in your `_config.yml`:
 
 ```yaml
 header_pages:
   - about.md
-  - tags.md
+  - archive.md
 ```
 
 #### Features
 
 - **Interactive Filtering**: JavaScript-powered tag filtering without page reloads
-- **URL Hash Support**: Direct linking to specific tag filters (e.g., `/tags/#technology`)
+- **URL Hash Support**: Direct linking to specific tag filters (e.g., `/archive/#technology`)
 - **Responsive Design**: Tag buttons adapt to different screen sizes
 - **Consistent Styling**: Matches the existing Minima theme aesthetic
 - **Automatic Tag Discovery**: Automatically finds all tags used across your posts
@@ -262,7 +262,7 @@ header_pages:
 The tags are displayed on:
 - Individual post pages (in the post header)
 - The home page (below each post title)
-- The tags archive page (as both filters and post metadata)
+- The archive page (as both filters and post metadata)
 
 ## Contributing
 

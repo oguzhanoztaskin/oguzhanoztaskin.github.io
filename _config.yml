@@ -21,7 +21,7 @@
 title: Oguzhan Oztaskin's Blog
 email: oguzhannoztaskin@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Hi there! This is my blog where I post about things I do. For more info, visit 'About' page.
+  A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://oguzhanoztaskin.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: OguzhanOztaskin
@@ -41,6 +41,10 @@ featured-tags: true # whether or not using Feature-Tags
 featured-condition-size: 1 # A tag will be featured if the size of it is more than this condition value
 RSS: true
 sidebar: true # Enable sidebar by default
+
+# Sidebar Settings
+# Avatar settings
+avatar: "/assets/avatar.jpg" # Path to your avatar image (relative to site root)
 
 # Exclude from processing.
 # The following items will not be processed, by default.

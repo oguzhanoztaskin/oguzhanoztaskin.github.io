@@ -180,6 +180,10 @@
   flex: 1;
 }
 
+.wrapper-with-sidebar {
+  max-width: calc(#{$content-width} + 280px + #{$spacing-unit * 1.5});
+}
+
 .page-heading {
   @include relative-font-size(2);
 }
@@ -423,5 +427,272 @@
       margin: 0 1px;
       margin-bottom: 6px;
     }
+  }
+}
+
+/**
+ * Sidebar Layout
+ */
+.home-with-sidebar {
+  display: flex;
+  gap: $spacing-unit * 1.5;
+  align-items: flex-start;
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0; // Prevents flexbox issues with long content
+}
+
+.sidebar {
+  flex: 0 0 280px;
+  background-color: lighten($grey-color-light, 15%);
+  border-radius: 8px;
+  padding: $spacing-unit;
+  margin-top: 0;
+  position: sticky;
+  top: $spacing-unit;
+  max-height: calc(100vh - #{$spacing-unit * 2});
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: $spacing-unit * 1.5;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.sidebar-heading {
+  @include relative-font-size(1.1);
+  font-weight: 600;
+  margin-bottom: $spacing-unit * 0.5;
+  color: $grey-color-dark;
+  border-bottom: 2px solid $brand-color;
+  padding-bottom: 8px;
+}
+
+/**
+ * Sidebar Tags
+ */
+.sidebar-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sidebar-tag-link {
+  display: inline-flex;
+  align-items: center;
+  background-color: $background-color;
+  color: $text-color;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid $grey-color-light;
+  transition: all 0.2s ease;
+  
+  .tag-count {
+    margin-left: 4px;
+    font-size: 10px;
+    color: $grey-color;
+  }
+  
+  &:hover {
+    background-color: lighten($brand-color, 45%);
+    color: darken($brand-color, 10%);
+    border-color: lighten($brand-color, 25%);
+    text-decoration: none;
+    transform: translateY(-1px);
+    
+    .tag-count {
+      color: darken($brand-color, 20%);
+    }
+  }
+  
+  &:visited {
+    color: $text-color;
+  }
+}
+
+.see-all-tags {
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.see-all-link {
+  font-size: 12px;
+  color: $brand-color;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/**
+ * About Me Section
+ */
+.about-me-content {
+  text-align: center;
+}
+
+.about-me-avatar {
+  margin-bottom: $spacing-unit * 0.5;
+}
+
+.avatar-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid $brand-color;
+}
+
+.about-me-text {
+  p {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: $spacing-unit * 0.5;
+    color: $grey-color-dark;
+  }
+}
+
+.about-me-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.about-link,
+.contact-link {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  text-align: center;
+  
+  &:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+}
+
+.about-link {
+  background-color: $brand-color;
+  color: white;
+  
+  &:hover {
+    background-color: darken($brand-color, 10%);
+  }
+  
+  &:visited {
+    color: white;
+  }
+}
+
+.contact-link {
+  background-color: $background-color;
+  color: $text-color;
+  border: 1px solid $grey-color-light;
+  
+  &:hover {
+    background-color: lighten($brand-color, 45%);
+    color: darken($brand-color, 10%);
+    border-color: lighten($brand-color, 25%);
+  }
+  
+  &:visited {
+    color: $text-color;
+  }
+}
+
+/**
+ * Recent Posts Section
+ */
+.recent-posts {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit * 0.5;
+}
+
+.recent-post-item {
+  padding-bottom: $spacing-unit * 0.5;
+  border-bottom: 1px solid lighten($grey-color-light, 10%);
+  
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.recent-post-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: $text-color;
+  text-decoration: none;
+  margin-bottom: 4px;
+  
+  &:hover {
+    color: $brand-color;
+    text-decoration: none;
+  }
+  
+  &:visited {
+    color: $grey-color-dark;
+  }
+}
+
+.recent-post-date {
+  font-size: 11px;
+  color: $grey-color;
+}
+
+/**
+ * Responsive Sidebar
+ */
+@include media-query($on-laptop) {
+  .home-with-sidebar {
+    flex-direction: column;
+    gap: $spacing-unit;
+  }
+  
+  .sidebar {
+    flex: none;
+    width: 100%;
+    position: static;
+    max-height: none;
+    margin-top: $spacing-unit;
+  }
+  
+  .sidebar-section {
+    margin-bottom: $spacing-unit;
+  }
+}
+
+@include media-query($on-palm) {
+  .sidebar {
+    padding: $spacing-unit * 0.75;
+  }
+  
+  .sidebar-heading {
+    @include relative-font-size(1);
+  }
+  
+  .about-me-links {
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .avatar-img {
+    width: 60px;
+    height: 60px;
   }
 }
