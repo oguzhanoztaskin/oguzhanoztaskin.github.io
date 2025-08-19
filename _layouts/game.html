@@ -1,0 +1,132 @@
+---
+layout: default
+---
+
+<article class="game-page">
+  <header class="game-header">
+    <h1 class="game-title">{{ page.title }}</h1>
+    <div class="game-meta">
+      <span class="game-type">{{ page.game_type | upcase }}</span>
+      {% if page.description %}
+        <p class="game-description">{{ page.description }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="game-container">
+    {% if page.game_type == "flash" %}
+      <div id="ruffle-container-{{ page.slug }}" class="flash-game-container">
+        <div id="loading-{{ page.slug }}" class="loading-indicator">Loading Flash game...</div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if page.instructions %}
+    <div class="game-instructions">
+      <h3>Instructions</h3>
+      {{ page.instructions | markdownify }}
+    </div>
+  {% endif %}
+
+  <div class="game-navigation">
+    <a href="/games/" class="back-to-games">← Back to Games</a>
+  </div>
+</article>
+
+<style>
+.game-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.game-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.game-title {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.game-meta {
+  margin-bottom: 20px;
+}
+
+.game-type {
+  background: #007cba;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.game-description {
+  font-size: 1.1em;
+  color: #666;
+  margin-top: 15px;
+}
+
+.game-container {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.flash-game-container {
+  background: #000;
+  border-radius: 10px;
+  padding: 20px;
+  display: inline-block;
+}
+
+.loading-indicator {
+  color: white;
+  padding: 50px;
+  font-size: 1.2em;
+}
+
+.game-instructions {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.game-navigation {
+  text-align: center;
+}
+
+.back-to-games {
+  color: #007cba;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-to-games:hover {
+  text-decoration: underline;
+}
+</style>
+
+{% if page.game_type == "flash" %}
+<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const ruffle = window.RufflePlayer.newest();
+  const player = ruffle.createPlayer();
+  const container = document.getElementById("ruffle-container-{{ page.slug }}");
+  
+  player.style.width = "800px";
+  player.style.height = "600px";
+  container.appendChild(player);
+  
+  player.load("{{ page.flash_file }}").then(() => {
+    document.getElementById("loading-{{ page.slug }}").style.display = "none";
+  }).catch(error => {
+    document.getElementById("loading-{{ page.slug }}").innerHTML = "Error loading Flash game: " + error;
+  });
+});
+</script>
+{% endif %}
