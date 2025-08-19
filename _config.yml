@@ -28,13 +28,19 @@ twitter_username: OguzhanOztaskin
 github_username: oguzhanoztaskin
 
 # Build settings
-theme: minima
+theme: my-theme
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-sitemap
   - jekyll-paginate
 paginate: 5
+
+# Taken from Huxpro
+featured-tags: true # whether or not using Feature-Tags
+featured-condition-size: 1 # A tag will be featured if the size of it is more than this condition value
+RSS: true
+sidebar: true # Enable sidebar by default
 
 # Exclude from processing.
 # The following items will not be processed, by default.

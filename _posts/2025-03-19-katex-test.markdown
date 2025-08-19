@@ -3,6 +3,7 @@ layout: post
 title:  "Katex Test"
 date:   2025-03-19 15:12:46 +0300
 categories: jekyll update
+tags: [deneme, deneme, deneme, tag1]
 ---
 
 Introduction
