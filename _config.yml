@@ -40,6 +40,7 @@ paginate: 5
 featured-tags: true # whether or not using Feature-Tags
 featured-condition-size: 1 # A tag will be featured if the size of it is more than this condition value
 RSS: true
+rss: RSS
 sidebar: true # Enable sidebar by default
 
 # Sidebar Settings
