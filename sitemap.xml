@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
+<loc>https://oguzhanoztaskin.github.io/games/electricman2/</loc>
+<lastmod>2025-08-19T14:27:19+00:00</lastmod>
+</url>
+<url>
+<loc>https://oguzhanoztaskin.github.io/games/ultimate-flash-sonic/</loc>
+<lastmod>2025-08-19T14:27:19+00:00</lastmod>
+</url>
+<url>
+<loc>https://oguzhanoztaskin.github.io/games/vindex/</loc>
+<lastmod>2025-08-19T14:27:19+00:00</lastmod>
+</url>
+<url>
+<loc>https://oguzhanoztaskin.github.io/games/water-mario/</loc>
+<lastmod>2025-08-19T14:27:19+00:00</lastmod>
+</url>
+<url>
 <loc>https://oguzhanoztaskin.github.io/jekyll/update/2025/03/18/welcome-to-jekyll.html</loc>
 <lastmod>2025-03-18T16:48:19+00:00</lastmod>
 </url>
@@ -10,6 +26,9 @@
 </url>
 <url>
 <loc>https://oguzhanoztaskin.github.io/about/</loc>
+</url>
+<url>
+<loc>https://oguzhanoztaskin.github.io/games/</loc>
 </url>
 <url>
 <loc>https://oguzhanoztaskin.github.io/</loc>
