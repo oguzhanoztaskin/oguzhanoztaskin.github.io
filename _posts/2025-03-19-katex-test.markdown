@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "My Cryptography Learning Journal"
+title:  "Katex Test"
 date:   2025-03-19 15:12:46 +0300
 categories: jekyll update
 ---

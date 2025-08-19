@@ -21,7 +21,7 @@
 title: Oguzhan Oztaskin's Blog
 email: oguzhannoztaskin@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Hi there! I am currently a Master's student who is interested in cryptography. This blog is very new at the moment and everything is subject to change.
+  Hi there! This is my blog where I post about things I do. For more info, visit 'About' page.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://oguzhanoztaskin.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: OguzhanOztaskin
