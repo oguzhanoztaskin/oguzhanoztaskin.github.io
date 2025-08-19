@@ -1,0 +1,151 @@
+---
+layout: default
+---
+<div class="home">
+  {%- if page.title -%}
+    <h1 class="page-heading">{{ page.title }}</h1>
+  {%- endif -%}
+
+  <!-- Tag Filter Buttons -->
+  <div class="tag-filters">
+    <button class="tag-filter-btn active" data-tag="all">Show All</button>
+    {%- assign all_tags = site.posts | map: 'tags' | join: ',' | split: ',' | uniq | sort -%}
+    {%- for tag in all_tags -%}
+      {%- unless tag == blank -%}
+        <button class="tag-filter-btn" data-tag="{{ tag | slugify }}">{{ tag }}</button>
+      {%- endunless -%}
+    {%- endfor -%}
+  </div>
+
+  <!-- Posts organized by tags -->
+  <div class="posts-container">
+    {%- assign all_tags = site.posts | map: 'tags' | join: ',' | split: ',' | uniq | sort -%}
+    
+    <!-- All posts section (shown by default) -->
+    <div class="tag-section" id="tag-all">
+      <ul class="post-list">
+        {%- assign posts = site.posts -%}
+        {%- for post in posts -%}
+        <li class="post-item">
+          {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+          <span class="post-meta">{{ post.date | date: date_format }}</span>
+          <h3>
+            <a class="post-link" href="{{ post.url | relative_url }}">
+              {{ post.title | escape }}
+            </a>
+          </h3>
+          {%- if post.tags and post.tags.size > 0 -%}
+            <div class="post-tags">
+              {%- for tag in post.tags -%}
+                <span class="tag-link" data-tag="{{ tag | slugify }}">{{ tag }}</span>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+          {%- if site.show_excerpts -%}
+            {{ post.excerpt }}
+          {%- endif -%}
+        </li>
+        {%- endfor -%}
+      </ul>
+    </div>
+
+    <!-- Individual tag sections -->
+    {%- for tag in all_tags -%}
+      {%- unless tag == blank -%}
+        <div class="tag-section" id="tag-{{ tag | slugify }}" style="display: none;">
+          <ul class="post-list">
+            {%- assign tagged_posts = site.posts | where_exp: "post", "post.tags contains tag" -%}
+            {%- for post in tagged_posts -%}
+            <li class="post-item">
+              {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+              <span class="post-meta">{{ post.date | date: date_format }}</span>
+              <h3>
+                <a class="post-link" href="{{ post.url | relative_url }}">
+                  {{ post.title | escape }}
+                </a>
+              </h3>
+              {%- if post.tags and post.tags.size > 0 -%}
+                <div class="post-tags">
+                  {%- for post_tag in post.tags -%}
+                    <span class="tag-link" data-tag="{{ post_tag | slugify }}">{{ post_tag }}</span>
+                  {%- endfor -%}
+                </div>
+              {%- endif -%}
+              {%- if site.show_excerpts -%}
+                {{ post.excerpt }}
+              {%- endif -%}
+            </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endunless -%}
+    {%- endfor -%}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const filterButtons = document.querySelectorAll('.tag-filter-btn');
+  const tagSections = document.querySelectorAll('.tag-section');
+  const tagLinks = document.querySelectorAll('.tag-link[data-tag]');
+
+  // Handle filter button clicks
+  filterButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const targetTag = this.getAttribute('data-tag');
+      showTag(targetTag);
+    });
+  });
+
+  // Handle tag link clicks within posts
+  tagLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      const targetTag = this.getAttribute('data-tag');
+      showTag(targetTag);
+    });
+  });
+
+  // Function to show posts for a specific tag
+  function showTag(tagName) {
+    // Update active button
+    filterButtons.forEach(btn => btn.classList.remove('active'));
+    const activeButton = document.querySelector(`[data-tag="${tagName}"]`);
+    if (activeButton && activeButton.classList.contains('tag-filter-btn')) {
+      activeButton.classList.add('active');
+    }
+
+    // Show/hide tag sections
+    tagSections.forEach(section => {
+      section.style.display = 'none';
+    });
+
+    const targetSection = document.getElementById(`tag-${tagName}`);
+    if (targetSection) {
+      targetSection.style.display = 'block';
+    }
+
+    // Update URL hash
+    if (tagName !== 'all') {
+      window.location.hash = tagName;
+    } else {
+      window.location.hash = '';
+    }
+  }
+
+  // Handle initial load with hash
+  const hash = window.location.hash.substring(1);
+  if (hash) {
+    showTag(hash);
+  }
+
+  // Handle browser back/forward
+  window.addEventListener('hashchange', function() {
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      showTag(hash);
+    } else {
+      showTag('all');
+    }
+  });
+});
+</script>
