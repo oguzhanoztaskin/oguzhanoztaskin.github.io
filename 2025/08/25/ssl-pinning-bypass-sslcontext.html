@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>SSL Pinning Bypass: SSLContext | Oguzhan’s Tech</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="SSL Pinning Bypass: SSLContext" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="In this post, I will explain how to bypass SSL Pinning with SSLContext using Frida." />
+<meta property="og:description" content="In this post, I will explain how to bypass SSL Pinning with SSLContext using Frida." />
+<link rel="canonical" href="https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-sslcontext.html" />
+<meta property="og:url" content="https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-sslcontext.html" />
+<meta property="og:site_name" content="Oguzhan’s Tech" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2025-08-25T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="SSL Pinning Bypass: SSLContext" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2025-08-25T00:00:00+00:00","datePublished":"2025-08-25T00:00:00+00:00","description":"In this post, I will explain how to bypass SSL Pinning with SSLContext using Frida.","headline":"SSL Pinning Bypass: SSLContext","mainEntityOfPage":{"@type":"WebPage","@id":"https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-sslcontext.html"},"url":"https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-sslcontext.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css">
+  
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous"><link type="application/atom+xml" rel="alternate" href="https://oguzhanstech.com/feed.xml" title="Oguzhan&apos;s Tech" /><!-- KaTeX JavaScript -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+          onload="renderMathInElement(document.body);"></script>
+</head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Oguzhan&#39;s Tech</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/archive/">Archive</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper ">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">SSL Pinning Bypass: SSLContext</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2025-08-25T00:00:00+00:00" itemprop="datePublished">Aug 25, 2025
+      </time></p><div class="post-tags"><a href="/archive/#android" class="tag-link">android</a><a href="/archive/#security" class="tag-link">security</a><a href="/archive/#ssl-pinning" class="tag-link">ssl-pinning</a><a href="/archive/#frida" class="tag-link">frida</a></div></header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>In this post, I will explain how to bypass SSL Pinning with <a href="https://developer.android.com/reference/javax/net/ssl/SSLContext">SSLContext</a> using <a href="https://frida.re/">Frida</a>.</p>
+
+<p>As the injection method, I use dylib injection for the reasons I explain below.</p>
+
+<h2 id="split-apks">Split APKs</h2>
+<p>Nowadays most apps are split APKs, meaning that they are split into different parts: A main APK that contains .dex files and most resources, one for native libraries (config.arm64_v8a.apk), one for each language the app supports (config.en.apk), one for graphics (config.mdpi.apk) etc. Furthermore, sometimes apktool fails on decompiling/recompiling the main APK and in such cases dylib injection is useful. This is because we do not have to change main APK at all (just resign it with our key), we only have to inject the Frida gadget into a library which lies in <code class="language-plaintext highlighter-rouge">config.&lt;arch&gt;.apk</code>.</p>
+
+<h2 id="injecting-frida-into-a-library">Injecting Frida into a library</h2>
+<p>First, we decompile <code class="language-plaintext highlighter-rouge">config.&lt;arch&gt;.apk</code> that contains the libraries. Then we will find a library that is loaded first, like <code class="language-plaintext highlighter-rouge">libreact_render_core.so</code> or anything else that might work. Then we will use the following script to inject the Frida gadget <code class="language-plaintext highlighter-rouge">libfrida-gadget.so</code> into it.</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">lief</span><span class="p">,</span> <span class="n">sys</span>
+
+<span class="n">target</span> <span class="o">=</span> <span class="n">sys</span><span class="p">.</span><span class="n">argv</span>
+<span class="n">libnative</span> <span class="o">=</span> <span class="n">lief</span><span class="p">.</span><span class="nf">parse</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+<span class="n">libnative</span><span class="p">.</span><span class="nf">add_library</span><span class="p">(</span><span class="sh">"</span><span class="s">libfrida-gadget.so</span><span class="sh">"</span><span class="p">)</span>
+<span class="n">libnative</span><span class="p">.</span><span class="nf">write</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+</code></pre></div></div>
+<p>This adds <code class="language-plaintext highlighter-rouge">libfrida-gadget.so</code> to the ELF’s dynamic section so that our gadget is loaded alongside the target library<sup id="fnref:1"><a href="#fn:1" class="footnote" rel="footnote" role="doc-noteref">1</a></sup>. You can check this with the <code class="language-plaintext highlighter-rouge">readelf</code> command:</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>readelf <span class="nt">-d</span> libreact_render_core.so 
+
+Dynamic section at offset 0x22000 contains 43 entries:
+  Tag        Type                         Name/Value
+ 0x00000001 <span class="o">(</span>NEEDED<span class="o">)</span>                     Shared library: <span class="o">[</span>libfrida.so]
+ 0x00000001 <span class="o">(</span>NEEDED<span class="o">)</span>                     Shared library: <span class="o">[</span>libjsi.so]
+ 0x00000001 <span class="o">(</span>NEEDED<span class="o">)</span>                     Shared library: <span class="o">[</span>liblogger.so]
+ 0x00000001 <span class="o">(</span>NEEDED<span class="o">)</span>                     Shared library: <span class="o">[</span>libreact_config.so]
+...
+</code></pre></div></div>
+<p>This is explained in a much better detail at <a href="https://lief.re/doc/stable/tutorials/09_frida_lief.html">here</a>.</p>
+
+<p>Once the Frida gadget works (the app freezes until I connect to it on startup), I ran the following command, <a href="/2025/08/25/ssl-pinning-bypass-network-security-config.html#a-note-on-adb-port-forwarding">explained more detailed here</a>:</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adb forward tcp:27042 tcp:27042
+</code></pre></div></div>
+<p>This forwards the port 27042 on my computer to the same port on my mobile, where Frida gadget listens by default. I can then connect to the Frida gadget via <code class="language-plaintext highlighter-rouge">frida -R gadget -l ssl.js</code> and let the script do the bypassing.</p>
+
+<h3 id="frida---ssl-pinning-bypass-script">Frida - SSL Pinning Bypass Script</h3>
+<p>The <code class="language-plaintext highlighter-rouge">ssl.js</code> I used above can be found <a href="https://codeshare.frida.re/@pcipolloni/universal-android-ssl-pinning-bypass-with-frida/">here</a>. This script does the following:</p>
+<ul>
+  <li>Get <code class="language-plaintext highlighter-rouge">javax.net.ssl.TrustManagerFactory</code> and use it to create a TrustManager for the certificate at <code class="language-plaintext highlighter-rouge">/data/local/tmp/cert-der.crt</code><sup id="fnref:2"><a href="#fn:2" class="footnote" rel="footnote" role="doc-noteref">2</a></sup></li>
+  <li>Hook <code class="language-plaintext highlighter-rouge">SSLContext.init</code> method so that all calls to it are intercepted.</li>
+  <li>When <code class="language-plaintext highlighter-rouge">SSLContext.init</code> is called, instead of the provided TrustManager, use our own that carries mitmproxy’s certificate.
+Once injected, the script logs its actions in real-time, so you can confirm whether the bypass worked.</li>
+</ul>
+
+<p>And that’s it. At this point I am supposed to be able to see the traffic. However I noticed while I can see some, there is still some traffic which I cannot as evident by mitmproxy’s logs. Then I realized there was another SSL pinning layer I hadn’t addressed: Network Security Config.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>In this post, I demonstrated a less known way of injecting Frida by modifying shared libraries, which avoids the common pitfalls of smali recompilation errors. Then we used a Frida script to hook <code class="language-plaintext highlighter-rouge">SSLContext.init</code> method. I have no practical defense solutions for this attack - Android does not seem to provide a way to see whether SSLContext is initialized with the intended trust manager or not. For a more general defense, detecting whether the gadget is present or not can be used, perhaps by listing the libraries.</p>
+
+<p><strong>Disclaimer:</strong> This post is intended solely for educational and research purposes. The techniques described here should only be applied to applications you own or have explicit permission to analyze. Reverse engineering, modifying, or intercepting traffic of third-party apps without consent may violate their terms of service and applicable laws. I do not encourage or condone using these methods against third-party apps without permission.</p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1">
+      <p>Sometimes this method silently fails and I haven’t figured out why yet. Injecting the Frida gadget into another library often works. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+    <li id="fn:2">
+      <p>This will be the mitmproxy’s certificate and we will push it to the device with <code class="language-plaintext highlighter-rouge">adb push mitmproxy.cert /data/local/tmp/cert-der.crt</code>. This is a directory all apps can access and that’s why we are using it. You can find mitmproxy certificates on your computer at <code class="language-plaintext highlighter-rouge">~/.mitmproxy</code> or your mobile that uses mitmproxy as proxy at <code class="language-plaintext highlighter-rouge">http://mitm.it</code>. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div><a class="u-url" href="/2025/08/25/ssl-pinning-bypass-sslcontext.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Oguzhan&#39;s Tech</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Oguzhan&#39;s Tech</li><li><a class="u-email" href="mailto:hello@oguzhanstech.com">hello@oguzhanstech.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/oguzhanoztaskin"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">oguzhanoztaskin</span></a></li><li><a href="https://www.twitter.com/OguzhanOztaskin"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">OguzhanOztaskin</span></a></li><li><a href="/feed.xml"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#rss"></use></svg> <span>RSS</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
