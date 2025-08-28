@@ -7,4 +7,4 @@ layout: home
 
 # Welcome!
 
- Hey there! Welcome to my blog. Here I post things I do, which are mostly tech things. The contents are naturally as volatile as my interests.
+ Hey there! Welcome to my blog. Here I post things I do, which are mostly tech things.

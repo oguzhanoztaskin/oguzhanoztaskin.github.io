@@ -34,6 +34,7 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
   - jekyll-paginate
+  - jekyll-scholar
 paginate: 5
 
 # Taken from Huxpro
@@ -66,3 +67,17 @@ avatar: "/assets/avatar.jpg" # Path to your avatar image (relative to site root)
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+scholar:
+  style: apa
+  locale: en
+
+  source: ./_bibliography
+  bibliography: references.bib
+
+  details_dir: bibliography
+  details_layout: bibtex.html
+  details_link: Details
+
+  replace_strings: true
+  join_strings: true
