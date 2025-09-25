@@ -7,13 +7,36 @@ tags: [cryptography, zkp, plonk, permutation]
 
 I decided to understand and implement the permutation proof of Plonk {% cite gabizon2019plonk %}. This will be required for a later post.
 
-The paper is not explicit in certain things I am new to, so I might have some mistakes. I also have some changes or guesses, like figuring out the implementation and applying Fiat-Shamir process. I describe the protocol in prover's perspective, and I add verifier's actions where necessary.
+The paper is not explicit in certain things I am new to, so I might have some mistakes. I also have some changes or guesses, like figuring out the implementation and applying Fiat-Shamir {% cite fiat1986how %} process.
 
-Plonk, in its fifth section, describes a permutation proof between two private polynomials, $f, g \in \mathbb{F}_{< n}[X]$ and a public permutation $\sigma$. The protocol rolls out as the following.
+## Preliminaries
 
-- Prover commits to $f, g$ and writes it to the transcript.
+Some definitions, notes, and requirements:
+- $[n] = \\{i \mid i < n, i \in \mathbb{N} \\} = \\{0, 1, 2, \dots, n-1\\}$
+- $f \in \mathbb{F}_{< n}[X]$: $f$ is a polynomial with degree less than $n$.
+- $\omega$: Generator of the cyclic multiplicative group $H$ of size $n$. Therefore, $H = \\{\omega^i \mid i \in [n]\\}$ and $\omega^i\cdot \omega^j = \omega^{(i+j) \% n}$.
+- $L_i(X) \in \mathbb{F}_{n}[X]$: $i$th [Lagrange basis polynomial](https://en.wikipedia.org/wiki/Lagrange_polynomial). It has the properties: $L_i(\omega^j) = 1$ if $i = j$, 0 if $i \neq j$. In other words, it takes the value $1$ at $i$th point of $H$, and takes the value $0$ for all other values of $H$.
+- Commitment Notation: Commitment of the polynomial $f$ is represented as $[f]$. In a pairing, it is written as $[f]_1$ to differentiate from the second groups elements, such as $[1]_2$. Therefore, if no subscript is provided, it is a commitment in the first group. Only commitment in the second group is $[1]_2$, which is provided by common reference string of KZG.
+- Pairings $e([f]_1, [g]_2)$: Pairings take two arguments and they are bilinear on them. Meaning: $e(a[f]_1, b[g]_2) = e([f]_1, ab[g]_2) = e(ab[f]_1, [g]_2) = e([f]_1, [g]_2)^{ab}$
+- Vanishing Polynomial on set $S$: A polynomial that evaluates to zero on each point of $S$, e.g. $Z_S \coloneqq \prod _{a\in S}(X-a)$.
+- Knowledge of KZG opening proofs.
+
+## Permutation Proof Protocol
+
+Plonk, in its 5th section, describes a permutation proof between two private polynomials. I applied Fiat-Shamir transformation and described it as follows.
+
+**Claim:** Given private polynomials $f, g \in \mathbb{F}_{< n}[X]$ and a public permutation $\sigma: [n] \to [n]$, there is a relation such that $\forall i \in [n]\ f(\omega^i) = g(\omega^{\sigma(i)} )$.
+
+**Common Inputs:**
+- $S_ {ID} \in \mathbb{F}_ {< n}[X]$ where $\forall i \in [n]\ S_ {ID}(\omega^i) = i$. This represents the identity permutation.
+- $S_ {\sigma} \in \mathbb{F}_ {< n}[X]$ where $\forall i \in [n]\ S_ {ID}(\omega^i) = \sigma(i)$. This represents the permutation $\sigma$.
+
+**Prover Inputs:** $f, g \in \mathbb{F}_{< n}[X]$
+
+**Proof Generation:**
+- Prover commits to $f, g$, which are represented as $[f], [g]$, and writes it to the transcript.
 - Prover samples random $\beta, \gamma$ from the transcript.
-- Prover computes $f' = f + \beta \cdot S_{ID} + \gamma$, $g' = g + \beta \cdot S_{\sigma} + \gamma$. The verifier constructs commitments to $f', g'$ using commitments to $f, g, S_{ID}, S_{\sigma}$.
+- Prover computes $f' = f + \beta \cdot S_{ID} + \gamma,\ g' = g + \beta \cdot S_{\sigma} + \gamma$.
 - Prover computes $Z\in \mathbb{F}_{< n}[X]$ value-by-value for each $i\in [n]$ and then uses Lagrange interpolation to build its polynomial: $Z(g^i) = \prod _{1\le j < i}f'(g^j)/g'(g^j)$.
 - Prover commits to $Z$ and writes the commitment to the transcript.
 - Prover includes the proof for equations that show $Z$ is legitimate
@@ -25,19 +48,71 @@ $$
 \end{align}
 $$
 
-The last step is explained in detail in the next section.
+**Proof Verification:**
 
-## Proving Arguments Over Sets
+Verifier starts reading from the beginning of the transcript. Random samples are created from the transcript up until last read. Hence, the prover and the verifier samples the same random values.
+- Verifier reads the commitments $[f], [g]$ from the transcript.
+- Verifier samples random $\beta, \gamma$ from the transcript.
+- Verifier constructs commitments to $f', g'$ using commitments to $f, g, S_{ID}, S_{\sigma}$:
+    - $[f'] = [f] + \beta\cdot[S_{ID}] + \gamma\cdot [1]$
+    - $[g'] = [g] + \beta\cdot[S_{\sigma}] + \gamma\cdot [1]$
+- Verifier reads the commitment to $Z$, represented as $[Z]$, from the transcript.
+- Verifier verifies the proof for equations 1, 2.
+
+The last step is not very simple, and requires some background knowledge on pairings, KZG {% cite kate2010constant %} opening proof, Plonk's batch opening proof of KZG, Plonk's polynomial protocols on ranges. We will review them first, before returning to the permutation proof.
+
+## S-ranged Polynomial Protocols
 Equations 1 and 2 need to be proved on a set of inputs, called $H$.
-In other words, these equations are only true on this subset and can be wrong outside. Plonk defines such polynomial protocols to be **S-ranged polynomial protocols** and discusses how to turn them into regular polynomial protocols in its section 4.
+In other words, these equations must hold on this set and they do not have to hold outside. Plonk defines such polynomial protocols to be **S-ranged polynomial protocols** and discusses how to turn them into regular polynomial protocols in its section 4. We discuss it in this section.
 
-Essentially, this section shows that if $Z_S \coloneqq \prod _{a\in S}(X-a)$ divides a polynomial $P(X)$, then with high probability $P(X)$ is $0$ on entire $S$.
+Notice that equations 1 and 2 have polynomials on the left hand side, which evaluate to $0$ on each element of $H$. That is, we want to prove that these polynomials are $0$, within the set $H$. This is different than proving a polynomial is $0$ at one point, which could be done with KZG opening proofs. We could solve this by opening the polynomial separately at each point of $H$ but that would not be smart as there would be too many points, increasing the cost greatly.
 
-If this does not make sense to you, consider it as the following: If a polynomial $P(X)$ has roots at points $a, b, c$, then $P(X)$ has factors such that we can write $P(X) = Q(X)(X-a)(X-b)(X-c)$. Then clearly it is divisible by all of these points simultaneously. The product of these points is $Z_S(X) = (X-a)(X-b)(X-c)$, which is the vanishing polynomial on $S = \{a,b,c\}$.
+Instead, Plonk utilizes the fact that if a polynomial $f$ is $0$ on a set $S$ then, the vanishing polynomial $Z_S$ is a factor of $f$. That is, it is divisible by it: $f(X) = Z_S(X)\cdot Q(X) + R(X)$, where $Q(X)$ is the quotient and the remainder $R(X)$ is $0$.
 
-In our equations above, we have $Z_H \coloneqq \prod _{a\in H}(X-a)$ and we need to show the right hand side of the equations are divisible by $Z_H$. We can do this with high probability only if the equations evaluate to $0$ on each point of $H$. That is exactly what we want.
+Plonk proves two claims here: 
+- $Q(X)$ is the quotient
+- $R(X) = 0$. 
 
-To proceed, we will need to learn how to do division proofs.
+If these claims are true, then the division is exact, and therefore $f$ is indeed $0$ on $S$ with high probability, exactly what we want! Proving these two claims is much more efficient than proving $n$ KZG evaluations.
+
+We summarize this proof as:
+
+**Claim:** $f \in \mathbb{F}_{< n}[X]$ is $0$ on set $S$.
+
+
+**Common Inputs:**
+- $Z_S \coloneqq \prod _{a\in S}(X-a)$
+
+**Prover Inputs:**
+- $f \in \mathbb{F}_{< n}[X]$
+
+**Proof Generation:**
+- Prover calculates $Q(X) = \dfrac{f(X)}{Z_S(X)}$ and commits to $f(X), Q(X)$.
+- Prover writes the commitments $[f(X)],[Q(X)]$ to the transcript.
+- Prover samples the random challenge point $\zeta$ from the transcript.
+- Prover computes $R'(X) = f(X) - Z_H(\zeta) \cdot Q(X)$. Note that this differs from the $R(X)$ above.[^1]
+- Prover computes $W_\zeta(X) = \dfrac{R(X)}{X-\zeta}$ and writes $[W_\zeta(X)]$ to the transcript.
+
+**Verification:**
+- Verifier reads $[f(X)], [Q(X)]$ from the transcript.
+- Verifier samples the random challenge point $\zeta$ from the transcript.
+- Verifier reads $[W_\zeta(X)]$ from the transcript.
+- Verifier checks $e([W_\zeta]_ 1, [x]_ 2) \stackrel{?}{=} e(\zeta \cdot [W_\zeta]_ 1 + [f(X)]_ 1 - Z_H(\zeta)\cdot[Q(X)]_ 1, [1]_ 2)$
+
+That's the end of this protocol. However, what does that last pairing check do?
+
+To take a closer look into the pairing equation, I apply the following transformations: Every commitment is an evaluation at $x$ and $e(a, b)$ is just $a\cdot b$. Then we get:
+
+$$
+\begin{align}
+W_\zeta(x)\cdot x           &\stackrel{?}{=} \zeta \cdot W_\zeta(x) + f(x) - Z_H(\zeta) \cdot Q(x) \notag \\
+W_\zeta(x)\cdot (x-\zeta)   &\stackrel{?}{=} f(x) - Z_H(\zeta) \cdot Q(x) \notag
+\end{align}
+$$
+
+So it checks if the committed polynomials have the claimed relations. For the aforomentioned reasons, this check passes with high probability only if $f(X)$ is zero on $H$. This is what we want, and hence we are done with S-ranged polynomial protocols.
+
+We can now apply this to equations 1 and 2, then we can finish the Plonk's permutation proof.
 
 ## Division Proofs
 
@@ -149,7 +224,7 @@ $$
 
     If that statement used $\bar{s}_ {\sigma 3}$, then it would contain no polynomial. Hence when the verifier computes $[D]_ 1, [E]_ 1$, this term would be a scalar multiplier of $[1]_ 1$. This shows us that there is space to use a polynomial commitment. If possible, we should use such spaces as it would be more efficient.
 
-    To sum up, $S_{\sigma 3}(X)$ was a known commitment prior to the verification and hence verifier cannot have chosen a tricky value. When $r(X)$ is evaluated at $\zeta$, this $S_ {\sigma 3}(X)$ necessarily takes the value of $\bar{s}_ {\sigma 3}$ and hence we do not need to put $\bar{s}_ {\sigma 3}$ to its place in $r(X)$. This way it is just more efficient and more convenient.
+    To sum up, $S_{\sigma 3}(X)$ was committed prior to the verification and hence verifier cannot have chosen a tricky value. When $r(X)$ is evaluated at $\zeta$, this $S_ {\sigma 3}(X)$ necessarily takes the value of evaluation $\bar{s}_ {\sigma 3}$. Hence, we get the evaluation value we want in the correct place in the equation, without having to prove the evaluation (i.e. the claim in the first paragraph). This way it is more efficient and more convenient.
 
 ## References
 
@@ -159,6 +234,6 @@ $$
 
 ## Footnotes
 
-[^1]: I spotted two reasons. First one: We cannot compute $Z_H(X)\cdot Q(X)$ in the pairing, that would be multiplication of two commitments. We can only multiply a commitment with a public scalar on the verifier's side. Second reason: When the division is exact, which is true for a true proof, $R(X)$ is identically zero and cannot be used further ($W_\zeta(X)$ would be $0$). Instead it is a polynomial that agrees with the remainder polynomial at $\zeta$ and we can prove that it is $0$ at this point. That is the remainder polynomial is $0$ at a random point, thus with high probability it is $0$ everywhere. In other words, the division is exact with high probability.
+[^1]: I spotted two reasons why $R(X)$ is not the remainder polynomial but a related polynomial. First one: We cannot compute $Z_H(X)\cdot Q(X)$ in the pairing, that would be multiplication of two commitments. We can only multiply a commitment, such as $Q(X)$, with a public scalar. So we evaluate the public polynomial, $Z_ H(X)$, and use its evaluation, a scalar value, as the factor of the other. Second reason: When the division is exact, which is always true for a true proof, the remainder polynomial is the zero polynomial and cannot be used further ($W_\zeta(X)$ would be $0$, too). Instead it is a related polynomial that agrees with the remainder polynomial at $\zeta$. We then prove that it is $0$ at this point. Because if the related polynomial is $0$ at this random point, then the remainder polynomial is zero at this random point, which implies that the remainder polynomial is $0$ everywhere by Schwartz-Zippel.
 [^2]: In Plonk section 8, at verifier's 8th step, $r_0$ is subtracted from $R(X)$ and then re-added. It says this is to save verifier a scalar multiplication but I do not see how that works and I omitted it.
 [^3]: Actually we do not have $g(\zeta)$ there. $S_{\sigma3}(X)$ is not opened at $\zeta$ and instead kept as is. Though later on when $r(X)$ is evaluated at $\zeta$, this factor of $\bar{z}_\omega$ evaluates to $g(\zeta)$. This is a design choice and it is explained in FAQ.
