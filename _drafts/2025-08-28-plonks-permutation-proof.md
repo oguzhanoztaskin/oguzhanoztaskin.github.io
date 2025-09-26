@@ -44,7 +44,7 @@ Plonk, in its 5th section, describes a permutation proof between two private pol
 $$
 \begin{align}
     L_1(a)(Z(a)-1) &=0,\ \forall a \in H\\
-    Z(a)f'(a) - g'(a)Z(a\cdot g) &= 0,\ \forall a \in H
+    Z(a)f'(a) - g'(a)Z(a\cdot \omega) &= 0,\ \forall a \in H
 \end{align}
 $$
 
@@ -113,6 +113,93 @@ $$
 So it checks if the committed polynomials have the claimed relations. For the aforomentioned reasons, this check passes with high probability only if $f(X)$ is zero on $H$. This is what we want, and hence we are done with S-ranged polynomial protocols.
 
 We can now apply this to equations 1 and 2, then we can finish the Plonk's permutation proof.
+
+## Plonk's Permutation Proof Finalized
+
+Let us define the left hand sides of the equations 1, 2 as polynomials $P_1(X), P_2(X)$:
+
+$$
+\begin{align}
+    P_1'(X) &= L_1(X)(Z(X)-1) \notag \\
+    P_2'(X) &= Z(X)f'(X) - g'(X)Z(X\cdot g) \notag
+\end{align}
+$$
+
+However, in the proof, we cannot multiply two commitments, we can only multiply a commitment by a scalar value. Therefore, we build the polynomials in the following way instead:
+
+$$
+\begin{align}
+    P_1(X) &= L_1(\zeta)(Z(X)-1) \notag \\
+    P_2(X) &= Z(X)f'(\zeta) - g'(X)Z(\zeta\cdot g)  \notag
+\end{align}
+$$
+
+Let's mark evaluations to be claimed with bars like Plonk does:
+
+$$
+\begin{align}
+    \bar{f'} &\coloneqq f'(\zeta) \notag \\
+    \bar{z}_\omega &\coloneqq Z'(\zeta\omega) \notag \\
+    P_1(X) &= L_1(\zeta)(Z(X)-1) \\
+    P_2(X) &= Z(X)\bar{f'} - g'(X)\bar{z}_\omega
+\end{align}
+$$
+
+Therefore, we need to use S-ranged polynomial protocols to prove $P_1(X), P_2(X)$ are $0$ on $H$, and also we need to prove openings $\bar{f'}, \bar{z}_\omega$ we used, because they are prover provided. Instead of proving these claims separately, we can actually combine them into one polynomial, and prove that is $0$ on $H$. That is what Plonk does.
+
+$$
+\begin{align}
+    P_3(X) &\coloneqq P_1(X) + \alpha \cdot P_2(X) \notag \\
+    P_3(X) &= Q_3(X) \cdot Z_H(X) + R_3(X) \notag \\
+    \text{where } Q_3(X) &= \lfloor P_3(X) / Z_H(X) \rfloor \text{ and } R_3(X) = P_3(X) \bmod Z_H(X) \notag \\
+\end{align}
+$$
+
+Now remember that we want to show $R_3(X)$ is $0$ at the random point $\zeta$, which implies it is $0$ everywhere due to probability. Also we want to prove the openings by evaluating them at the random point $\zeta$. We can combine it all:
+
+$$
+\begin{align}
+    P_3(X) &= Q_3(X) \cdot Z_H(X) + R_3(X) \notag \\
+    R_3(X) &= P_3(X) - Q_3(X) \cdot Z_H(X) \tag{Rearrange} \\
+    R'_3(X) &= P_3(X) - Q_3(X) \cdot Z_H(\zeta) \tag{Replace $Z_H(X)$} \\
+    R'_3(X) - 0 &= 0 \tag{At $X = \zeta$} \\
+    f'(X) - \bar{f'} &= 0   \tag{At $X = \zeta$} \\
+    z(X) - \bar{z}_\omega &= 0   \tag{At $X = \zeta\omega$} \\
+    
+\end{align}
+$$
+
+Observe that 2 of the equations need to be opened at $\zeta$, and one needs to be opened at $\zeta\omega$. Plonk uses batched KZG openings as described in its 3rd section. We will do the same. We first write down the opening proofs separetely:
+
+$$
+\begin{align}
+    W_\zeta(X) &\coloneqq \dfrac{(R'_3(X) - 0) + v \cdot (f'(X) - \bar{f'})}{X - \zeta} \\
+    W_{\zeta\omega}(X) &\coloneqq \dfrac{z(X)-\bar{z}_\omega}{X-\zeta\omega}
+\end{align}
+$$
+
+Observe that if we prove them separately, we need 2 pairing equations which we want to avoid: 
+
+$$
+\begin{align}
+    e([W_\zeta]_1, [x]_2) &\stackrel{?}{=} e(\zeta\cdot[W_\zeta]_1 + [R'_3(X)]_1 + v \cdot ([f'(X)]_1 - \bar{f'}), [1]_2) \\
+    e([W_{\zeta\omega}]_1, [x]_2) &\stackrel{?}{=} e(\zeta\omega\cdot[W_{\zeta\omega}]_1 + [z(X)]_1 - \bar{z}_\omega, [1]_2) \\
+\end{align}
+$$
+
+Now we will combine them using the random variable $u$ sampled from the transcript:
+
+$$
+\begin{align}
+    e([W_\zeta]_1 + u \cdot [W_{\zeta\omega}]_1, [x]_2) \stackrel{?}{=} e(
+        &\zeta\cdot[W_\zeta]_1 + u\zeta\omega\cdot[W_{\zeta\omega}]_1 \notag \\
+        & + [R'_3(X)]_1 + v \cdot ([f'(X)]_1 - \bar{f'}) \notag \\
+        & + u\cdot([z(X)]_1 - \bar{z}_\omega) 
+        , [1]_2) \notag
+\end{align}
+$$
+
+$[R'_3(X)]$ can be derived from the commitments and public polynomials by the verifier.[^4]
 
 ## Division Proofs
 
@@ -235,5 +322,6 @@ $$
 ## Footnotes
 
 [^1]: I spotted two reasons why $R(X)$ is not the remainder polynomial but a related polynomial. First one: We cannot compute $Z_H(X)\cdot Q(X)$ in the pairing, that would be multiplication of two commitments. We can only multiply a commitment, such as $Q(X)$, with a public scalar. So we evaluate the public polynomial, $Z_ H(X)$, and use its evaluation, a scalar value, as the factor of the other. Second reason: When the division is exact, which is always true for a true proof, the remainder polynomial is the zero polynomial and cannot be used further ($W_\zeta(X)$ would be $0$, too). Instead it is a related polynomial that agrees with the remainder polynomial at $\zeta$. We then prove that it is $0$ at this point. Because if the related polynomial is $0$ at this random point, then the remainder polynomial is zero at this random point, which implies that the remainder polynomial is $0$ everywhere by Schwartz-Zippel.
+[^4]: This is the new one
 [^2]: In Plonk section 8, at verifier's 8th step, $r_0$ is subtracted from $R(X)$ and then re-added. It says this is to save verifier a scalar multiplication but I do not see how that works and I omitted it.
 [^3]: Actually we do not have $g(\zeta)$ there. $S_{\sigma3}(X)$ is not opened at $\zeta$ and instead kept as is. Though later on when $r(X)$ is evaluated at $\zeta$, this factor of $\bar{z}_\omega$ evaluates to $g(\zeta)$. This is a design choice and it is explained in FAQ.
