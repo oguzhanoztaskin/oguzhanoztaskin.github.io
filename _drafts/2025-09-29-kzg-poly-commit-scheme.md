@@ -18,16 +18,20 @@ Some definitions and notes:
 
 - **Polynomial Degree**: $f \in \mathbb{F}_{< n}[X]$ means $f$ is a polynomial with degree less than $n$.
 
-- **Commitment Notation**: The commitment of polynomial $f(X)$ is represented as $[f(X)]_1$ if it is in the first group, and $[f(X)]_2$ if it is in the second group. If no subscript is provided, it is a commitment in the first group.
+- **Commitment Notation**: The commitment of polynomial $f(X)$ is represented as $[f(x)]_1$ if it is in the first group, and $[f(x)]_2$ if it is in the second group. If no subscript is provided, it is a commitment in the first group.
 
-- **Pairings**: $e([f]_1, [g]_2)$ takes two arguments and is bilinear: 
-  
+- **Additive Homomorphism**: The commitment scheme allows for addition and scalar multiplication. This means that for polynomials $f(X)$ and $g(X)$ and a scalar $c$:
+    - **Addition**: $[f(x)] + [g(x)] = [f(x) + g(x)]$
+    - **Scalar Multiplication**: $c[f(x)] = [c \cdot f(x)]$
+
+- **Pairings**: $e([f]_1, [g]_2)$ takes two arguments and is bilinear:
+
   $$e(a[f]_1, b[g]_2) = e([f]_1, ab[g]_2) = e(ab[f]_1, [g]_2) = e([f]_1, [g]_2)^{ab}$$
 
 
 ## What is KZG?
 
-KZG is the polynomial commitment scheme (PCS) used by Plonk, and the PCS I chose to use for my work. 
+KZG is the polynomial commitment scheme (PCS) used by Plonk, and the PCS I chose to use for my work.
 A polynomial commitment scheme is a protocol that allows the prover to commit to a polynomial, and then in zero-knowledge prove its evaluation at a given point.
 
 The high level idea of KZG is that
@@ -35,7 +39,7 @@ The high level idea of KZG is that
 - If a polynomial $p(X)$ passes through $(x_0, y_0)$, then the polynomial $p'(X) \coloneqq p(X)-y_0$ is $0$ at $X=x_0$.
 - Then $p'(X)$ has a root at $X=x_0$. That is, $X-x_0$ is a factor of it and if we divide $p'(X)$ by this value, the division must be exact.
 - If we can prove that the division is exact, for example by multiplying the quotient with the divisor and checking if the result is the same as the expected dividend, we would be proving the polynomial evaluation.
-- That multiplication can be proven using elliptic curves and pairings. That is what KZG does. 
+- That multiplication can be proven using elliptic curves and pairings. That is what KZG does.
 
 In the following section, I explain this in detail.
 
@@ -74,26 +78,23 @@ Therefore, $X-x_0$ is a factor of it and thus the division is exact, i.e. the re
 
 $$
 \begin{align}
-[p(X)]_ 1 &\coloneqq c_ 0\cdot[1]_ 1 + c_ 1\cdot [x] + \dots + c_{n-1}\cdot[x^{n-1}] \notag \\
-[q(X)]_ 1 &\coloneqq c^q_ 0\cdot[1]_ 1 + c^q_ 1\cdot [x] + \dots + c^q_{m-1}\cdot[x^{m-1}] \notag \\
+[p(x)]_1 &\coloneqq c_0[1]_1 + c_1[x]_1 + \dots + c_{n-1}[x^{n-1}]_1 \notag \\
+[q(x)]_1 &\coloneqq c^q_0[1]_1 + c^q_1[x]_1 + \dots + c^q_{m-1}[x^{m-1}]_1 \notag \\
 \end{align}
 $$
 
-This is possible because the commitment scheme is additively homomorphic. Therefore, we can sum up commitments with themselves to compute scalar multiplications, i.e. we can compute $c \cdot [x^j]$ where $j$ is any known power of $x$, and then sum different terms together.
+This is possible because the commitment scheme is additively homomorphic. Therefore, we can sum up commitments with themselves to compute scalar multiplications, i.e. we can compute $c[x^j]_1$ where $j$ is any known power of $x$, and then sum different terms together.
 
-Notice that on the left hand side we use $X$ but on the right hand side we use $x$. This is no mistake. Commitment is evaluating the polynomial at $X=x$ and writing that as an elliptic curve point.
+Notice that the commitment is just evaluating the polynomial at $X=x$, the toxic waste, and taking that to the elliptic curve.
 
-- Prover sends $[p(X)]_1, [q(X)]_1$ to the verifier.
-- Verifier checks the equation 2:
+- Prover sends $[p(x)]_1, [q(x)]_1$ to the verifier.
+- Verifier checks the equation:
 
 $$
 \begin{align}
-e([q(X)]_1, 1\cdot[x]_2 - x_0\cdot[1]_2) &\stackrel{?}{=} e([p(X)]_1 - y_0 \cdot [1]_1, [1]_2) \\
-e([q(X)]_1, [x]_2 - [x_0]_2) &\stackrel{?}{=} e([p(X)]_1 - [y_0]_1, [1]_2) \\
+e([q(x)]_1, [x]_2 - x_0[1]_2) &\stackrel{?}{=} e([p(x)]_1 - y_0[1]_1,[1]_2) \notag \\
 \end{align}
 $$
-
-where the equation 2 is just the equation 1 in simpler terms.
 
 If the check passes, the verifier accepts the claim $p(x_0) \stackrel{?}{=} y_0$.
 
@@ -107,14 +108,14 @@ In other words, the pairing helped us revert the division to a multiplication an
 
 **Reading a pairing equation:** Apply the following transformations:
 
-- Every commitment is an evaluation at $x$, the toxic variable.
+- Every commitment is an evaluation at $x$, the toxic variable. Revert it by replacing $x$ with $X$.
 - $e(a, b)$ is just $a\cdot b$.
 
-Therefore, if we apply them to the equation 2, we get
+Therefore, if we apply them to the pairing equation, we get
 
 $$
 \begin{align}
-q(x)\cdot(x-x_0) \stackrel{?}{=} p(x) - y_0 \notag
+q(X)\cdot(X-x_0) \stackrel{?}{=} p(X) - y_0 \notag
 \end{align}
 $$
 
@@ -123,3 +124,7 @@ In more complex equations where we need to move terms around this transformation
 ## Conclusion
 
 We have seen fundamental concepts like how to compute a commitment to a polynomial, how additive homomorphism works, how pairings work, and how KZG's protocol is designed. We will build on these in the later posts where we work on more complicated ideas.
+
+## References
+
+{% bibliography --cited %}
