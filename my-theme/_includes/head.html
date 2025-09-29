@@ -21,8 +21,13 @@
 renderMathInElement(document.body, {
   delimiters: [
     {left: "$", right: "$", display: false},
-    {left: "\\(", right: "\\)", display: true},
-    {left: "\\[", right: "\\]", display: true} // use $$ in md, it is internally changed to \[ and \] 
-  ]
+    {left: "\\(", right: "\\)", display: false},
+    {left: "\\[", right: "\\]", display: true},
+    {left: "$$", right: "$$", display: true}
+  ],
+  throwOnError: false,
+  displayMode: true,
+  fleqn: false,
+  strict: false
 });'></script>
 </head>

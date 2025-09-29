@@ -3,6 +3,7 @@ layout: post
 title: "Plonk's Permutation Proof"
 date: 2025-08-28
 tags: [cryptography, zkp, plonk, permutation]
+math_heavy: true
 ---
 
 I decided to understand and implement the permutation proof of Plonk {% cite gabizon2019plonk %}. This will be required for a later post.
@@ -12,14 +13,36 @@ The paper is not explicit in certain things I am new to, so I might have some mi
 ## Preliminaries
 
 Some definitions, notes, and requirements:
-- $[n] = \\{i \mid i < n, i \in \mathbb{N} \\} = \\{0, 1, 2, \dots, n-1\\}$
-- $f \in \mathbb{F}_{< n}[X]$: $f$ is a polynomial with degree less than $n$.
-- $\omega$: Generator of the cyclic multiplicative group $H$ of size $n$. Therefore, $H = \\{\omega^i \mid i \in [n]\\}$ and $\omega^i\cdot \omega^j = \omega^{(i+j) \% n}$.
-- $L_i(X) \in \mathbb{F}_{n}[X]$: $i$th [Lagrange basis polynomial](https://en.wikipedia.org/wiki/Lagrange_polynomial). It has the properties: $L_i(\omega^j) = 1$ if $i = j$, 0 if $i \neq j$. In other words, it takes the value $1$ at $i$th point of $H$, and takes the value $0$ for all other values of $H$.
-- Commitment Notation: Commitment of the polynomial $f$ is represented as $[f]$. In a pairing, it is written as $[f]_1$ to differentiate from the second groups elements, such as $[1]_2$. Therefore, if no subscript is provided, it is a commitment in the first group. Only commitment in the second group is $[1]_2$, which is provided by common reference string of KZG.
-- Pairings $e([f]_1, [g]_2)$: Pairings take two arguments and they are bilinear on them. Meaning: $e(a[f]_1, b[g]_2) = e([f]_1, ab[g]_2) = e(ab[f]_1, [g]_2) = e([f]_1, [g]_2)^{ab}$
-- Vanishing Polynomial on set $S$: A polynomial that evaluates to zero on each point of $S$, e.g. $Z_S \coloneqq \prod _{a\in S}(X-a)$.
-- Knowledge of KZG opening proofs.
+
+- **Index Set Notation**: $[n] = \\{i \mid i < n, i \in \mathbb{N} \\} = \\{0, 1, 2, \dots, n-1\\}$
+
+- **Polynomial Degree**: $f \in \mathbb{F}_{< n}[X]$ means $f$ is a polynomial with degree less than $n$.
+
+- **Cyclic Group Generator**: $\omega$ is the generator of the cyclic multiplicative group $H$ of size $n$. 
+  
+  Therefore, $H = \\{\omega^i \mid i \in [n]\\}$ and $\omega^i\cdot \omega^j = \omega^{(i+j) \bmod n}$.
+
+- **Lagrange Basis Polynomials**: $L_i(X) \in \mathbb{F}_{n}[X]$ is the $i$-th [Lagrange basis polynomial](https://en.wikipedia.org/wiki/Lagrange_polynomial). 
+  
+  It satisfies: $L_i(\omega^j) = 1$ if $i = j$, and $L_i(\omega^j) = 0$ if $i \neq j$. 
+  
+  In other words, it takes the value $1$ at the $i$-th point of $H$, and takes the value $0$ for all other values of $H$.
+
+- **Commitment Notation**: The commitment of polynomial $f$ is represented as $[f]$. 
+  
+  In pairings, it is written as $[f]_1$ to differentiate from second group elements, such as $[1]_2$. 
+  
+  If no subscript is provided, it is a commitment in the first group. The only commitment in the second group is $[1]_2$, which is provided by the common reference string of KZG.
+
+- **Pairings**: $e([f]_1, [g]_2)$ takes two arguments and is bilinear: 
+  
+  $$e(a[f]_1, b[g]_2) = e([f]_1, ab[g]_2) = e(ab[f]_1, [g]_2) = e([f]_1, [g]_2)^{ab}$$
+
+- **Vanishing Polynomial**: For a set $S$, the vanishing polynomial is defined as: 
+  
+  $$Z_S \coloneqq \prod _{a\in S}(X-a)$$
+
+- **Prerequisites**: Knowledge of KZG opening proofs is assumed.
 
 ## Permutation Proof Protocol
 
@@ -222,6 +245,7 @@ R(X) &= P(X) - Z_H(\zeta) \cdot Q(X)    \tag{round 5} \\
 W_{\zeta}(X) &= \dfrac{R(X)}{X-\zeta}  \tag{round 5}
 \end{align}
 $$
+
 where $v, \zeta$ are random variables provided by the verifier. What the above does is reducing the claim $P(X)$ is $0$ over $H$ to the above remainder $R(X)$ is zero everywhere. Note that $R(X)$ has changed, $Z_H(X)$ is evaluated at $\zeta$ now. This is not a problem, and in fact necessary.[^1]
 
 To roll this out:
@@ -248,15 +272,18 @@ $$
 - Prover commits $P(X)$, we write it as $[P(X)]_1$
 - Verifier sends random number $\gamma$
 - Prover calculates $Z^{row}(X)$:
+
 $$
 \begin{align}
 Z^{row}_r(g^i) &= 1 \tag{for $i=1$} \\ 
 Z^{row}_r(g^i) &= \prod^{i-1}_{j=1} \dfrac{f^{row}_r(g^j)}{g(g^j)} \tag{for $i \ge 2$}
 \end{align}
 $$
+
 Then uses IFFT {% cite cooley1965algorithm %} to get its coefficients form. Finally, commits to it: $[Z^{row}_r(X)]_1$.
 
 At this point the verifier needs to check the following via previously described methods $\forall a \in H$:
+
 $$
 \begin{align}
 L_1(a)Z^{row}_r(a)-1 &= 0 \\
@@ -264,20 +291,25 @@ Z^{row}_r(a) \cdot (P(g^{9r} \cdot a) + \gamma^r)
 &= (N(a) + \gamma^r) \cdot Z^{row}_r(a\cdot g)
 \end{align}
 $$
+
 Therefore,
 - Prover commits to $Q(X)$, which is
+
 $$
 \begin{align}
 Q(X) \coloneqq \dfrac{P(X)}{Z_H(X)}
 \end{align}
 $$
+
 - Verifier sends the random variable $\zeta$
 - Prover commits $W_\zeta(X)$, which is
+
 $$
 \begin{align}
 W_\zeta(X) \coloneqq \dfrac{P(X)-Z_H(\zeta) \cdot Q(X)}{X-\zeta}
 \end{align}
 $$
+
 - Verifier checks
 
 ## Questions & Answers

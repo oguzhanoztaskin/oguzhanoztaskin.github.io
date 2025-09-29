@@ -247,6 +247,20 @@
       @include relative-font-size(1.125);
     }
   }
+
+  // Math-specific improvements
+  .katex-display {
+    margin: 1.5em auto !important;
+    padding: 0.5em 0;
+  }
+
+  // Math-heavy posts get special list spacing
+  &.math-heavy {
+    ul li, ol li {
+      margin-bottom: 0.6em;
+      line-height: 1.7;
+    }
+  }
 }
 
 /**
