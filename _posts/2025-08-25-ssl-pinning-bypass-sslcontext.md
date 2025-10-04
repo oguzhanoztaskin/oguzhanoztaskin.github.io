@@ -5,7 +5,7 @@ date: 2025-08-25
 tags: [android, security, ssl-pinning, frida]
 ---
 
-In this post, I will explain how to bypass SSL Pinning with [SSLContext](https://developer.android.com/reference/javax/net/ssl/SSLContext) using [Frida](https://frida.re/).
+In this post, I will explain how to bypass SSL Pinning via [SSLContext](https://developer.android.com/reference/javax/net/ssl/SSLContext) using [Frida](https://frida.re/).
 
 As the injection method, I use dylib injection for the reasons I explain below.
 

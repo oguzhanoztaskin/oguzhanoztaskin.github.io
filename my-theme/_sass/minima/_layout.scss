@@ -444,14 +444,35 @@
   position: sticky;
   top: $spacing-unit;
   max-height: calc(100vh - #{$spacing-unit * 2});
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-unit;
 }
 
 .sidebar-section {
-  margin-bottom: $spacing-unit * 1.5;
+  // Equal height for all three sections
+  &:nth-child(1), &:nth-child(2), &:nth-child(3) {
+    flex: 1;
+  }
   
-  &:last-child {
-    margin-bottom: 0;
+  // Make first two sections adapt content to fit (no overflow)
+  &:nth-child(1), &:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    
+    .sidebar-tags, .about-me-content {
+      flex: 1;
+      overflow: visible;
+    }
+  }
+  
+  // Make recent posts section scrollable
+  &:nth-child(3) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
   }
 }
 
@@ -471,6 +492,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  align-content: flex-start;
+  
+  // Limit number of tags based on available space
+  .sidebar-tag-link {
+    flex-shrink: 1;
+    min-width: 0;
+  }
 }
 
 .sidebar-tag-link {
@@ -530,10 +558,37 @@
  */
 .about-me-content {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  
+  .about-me-text p {
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: $spacing-unit * 0.3;
+    color: $grey-color-dark;
+    
+    // Make text smaller if space is limited
+    @media (max-height: 800px) {
+      font-size: 12px;
+      line-height: 1.3;
+    }
+  }
+  
+  .avatar-img {
+    width: 60px;
+    height: 60px;
+    
+    // Smaller avatar for limited space
+    @media (max-height: 800px) {
+      width: 50px;
+      height: 50px;
+    }
+  }
 }
 
 .about-me-avatar {
-  margin-bottom: $spacing-unit * 0.5;
+  margin-bottom: $spacing-unit * 0.3;
+  flex-shrink: 0;
 }
 
 .avatar-img {
@@ -545,18 +600,17 @@
 }
 
 .about-me-text {
-  p {
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: $spacing-unit * 0.5;
-    color: $grey-color-dark;
-  }
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .about-me-links {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  margin-top: auto;
 }
 
 .about-link,
@@ -610,6 +664,27 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-unit * 0.5;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 8px; // Space for scrollbar
+  
+  // Custom scrollbar styling
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $grey-color-light;
+    border-radius: 2px;
+    
+    &:hover {
+      background: $grey-color;
+    }
+  }
 }
 
 .recent-post-item {
@@ -657,10 +732,10 @@
   
   .sidebar {
     flex: none;
-    width: 100%;
     position: static;
     max-height: none;
     margin-top: $spacing-unit;
+    padding-left: 0px;
   }
   
   .sidebar-section {
@@ -670,7 +745,7 @@
 
 @include media-query($on-palm) {
   .sidebar {
-    padding: $spacing-unit * 0.75;
+    padding-left: 0;
   }
   
   .sidebar-heading {
