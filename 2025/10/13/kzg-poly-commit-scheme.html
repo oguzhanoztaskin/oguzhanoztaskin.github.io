@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" type="image/png" href="/favicon.png"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>KZG Polynomial Commitment Scheme | Oguzhan’s Tech</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="KZG Polynomial Commitment Scheme" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="KZG polynomial commitment scheme (Kate et al., 2010) is a fundamental building block for many zero-knowledge proof systems, including Plonk (Gabizon et al., 2019). In this post, I’ll explain how KZG works and provide the groundwork needed for understanding more complex protocols." />
+<meta property="og:description" content="KZG polynomial commitment scheme (Kate et al., 2010) is a fundamental building block for many zero-knowledge proof systems, including Plonk (Gabizon et al., 2019). In this post, I’ll explain how KZG works and provide the groundwork needed for understanding more complex protocols." />
+<link rel="canonical" href="https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html" />
+<meta property="og:url" content="https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html" />
+<meta property="og:site_name" content="Oguzhan’s Tech" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2025-10-13T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="KZG Polynomial Commitment Scheme" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2025-10-13T00:00:00+00:00","datePublished":"2025-10-13T00:00:00+00:00","description":"KZG polynomial commitment scheme (Kate et al., 2010) is a fundamental building block for many zero-knowledge proof systems, including Plonk (Gabizon et al., 2019). In this post, I’ll explain how KZG works and provide the groundwork needed for understanding more complex protocols.","headline":"KZG Polynomial Commitment Scheme","mainEntityOfPage":{"@type":"WebPage","@id":"https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html"},"url":"https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css">
+  
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous"><link type="application/atom+xml" rel="alternate" href="https://oguzhanstech.com/feed.xml" title="Oguzhan&apos;s Tech" /><!-- KaTeX JavaScript -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+  
+          onload='
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: "$", right: "$", display: false},
+    {left: "\\(", right: "\\)", display: true},
+    {left: "\\[", right: "\\]", display: true} // use $$ in md, it is internally changed to \[ and \] 
+  ]
+});'></script>
+</head><body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Oguzhan&#39;s Tech</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/archive/">Archive</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper ">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">KZG Polynomial Commitment Scheme</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2025-10-13T00:00:00+00:00" itemprop="datePublished">Oct 13, 2025
+      </time></p><div class="post-tags"><a href="/archive/#cryptography" class="tag-link">cryptography</a><a href="/archive/#zkp" class="tag-link">zkp</a><a href="/archive/#kzg" class="tag-link">kzg</a><a href="/archive/#commitment-schemes" class="tag-link">commitment schemes</a></div></header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>KZG polynomial commitment scheme <a class="citation" href="#kate2010constant">(Kate et al., 2010)</a> is a fundamental building block for many zero-knowledge proof systems, including Plonk <a class="citation" href="#gabizon2019plonk">(Gabizon et al., 2019)</a>. In this post, I’ll explain how KZG works and provide the groundwork needed for understanding more complex protocols.</p>
+
+<p>My goal is making these posts implementation oriented - not too abstract. However, some used concepts will not be described in full, this will be more like <em>some notes on cryptography</em>.</p>
+
+<p>For more complete, reliable, and more reviewed text you may refer to <a href="https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html">Dankrad Feist’s blog</a> or to the original paper <a class="citation" href="#kate2010constant">(Kate et al., 2010)</a>.</p>
+
+<p><strong>Disclaimer:</strong> These are my personal notes and understanding of the topic. They may contain errors or oversimplifications. I don’t claim to provide absolute truth - rather, I invite discussion and corrections. If you spot any mistakes or have insights to share, please reach out!</p>
+
+<h2 id="preliminaries">Preliminaries</h2>
+
+<p>Some definitions and notes:</p>
+
+<p><strong>Polynomial Degree</strong>: $f \in \mathbb{F}_{&lt; n}[X]$ means $f$ is a polynomial with degree less than $n$.</p>
+
+<p><strong>Commitment Notation</strong>: The commitment of polynomial $f(X)$ is represented as $[f(x)]_1$ if it is in the first group, and $[f(x)]_2$ if it is in the second group. If no subscript is provided, it is a commitment in the first group.</p>
+
+<p><strong>Additive Homomorphism</strong>: The commitment scheme allows for addition and scalar multiplication. This means that for polynomials $f(X)$ and $g(X)$ and a scalar $c$:</p>
+<ul>
+  <li><strong>Addition</strong>: $[f(x)] + [g(x)] = [f(x) + g(x)]$</li>
+  <li><strong>Scalar Multiplication</strong>: $c[f(x)] = [c \cdot f(x)]$</li>
+</ul>
+
+<p><strong>Pairings</strong>: $e([f]_1, [g]_2)$ takes two arguments and is bilinear:</p>
+
+\[e(a[f]_1, b[g]_2) = e([f]_1, ab[g]_2) = e(ab[f]_1, [g]_2) = e([f]_1, [g]_2)^{ab}\]
+
+<h2 id="what-is-kzg">What is KZG?</h2>
+
+<p>KZG is the polynomial commitment scheme (PCS) used by Plonk, and the PCS I chose to use for my work.
+A polynomial commitment scheme is a protocol that allows the prover to commit to a polynomial, and then in zero-knowledge prove its evaluation at a given point.</p>
+
+<p>The high level idea of KZG is that</p>
+
+<ul>
+  <li>If a polynomial $p(X)$ passes through $(x_0, y_0)$, then the polynomial $p’(X) \coloneqq p(X)-y_0$ is $0$ at $X=x_0$.</li>
+  <li>Then $p’(X)$ has a root at $X=x_0$. That is, $X-x_0$ is a factor of it and if we divide $p’(X)$ by this value, the division must be exact.</li>
+  <li>If we can prove that the division is exact, for example by multiplying the quotient with the divisor and checking if the result is the same as the expected dividend, we would be proving the polynomial evaluation.</li>
+  <li>That multiplication can be proven using elliptic curves and pairings. That is what KZG does.</li>
+</ul>
+
+<p>In the following section, I explain this by showing each step.</p>
+
+<h2 id="the-protocol">The Protocol</h2>
+
+<p><strong>Claim:</strong> $p(X) \in \mathbb{F}_{&lt; n}[X]$ is a private polynomial and it passes through the public point $(x_0, y_0)$.</p>
+
+<p><strong>Setup:</strong> Trusted setup provides the commitments $[1]_1, [x]_1, [x^2]_1, \dots, [x^{n-1}]_1$ and $[1]_2, [x]_2$. This is called the Structured Reference String, or SRS for short.</p>
+
+<p>Here, $x$ is a toxic variable that no one should know. It is required for the generation of SRS, but then it must be destroyed. Because if someone knows $x$, they can make false proofs, i.e. showing a polynomial passes through a point when it actually does not.</p>
+
+<p><strong>Common Inputs:</strong> $(x_0, y_0) \in \mathbb{F}^2$</p>
+
+<p><strong>Prover Inputs:</strong> $p(X) \in \mathbb{F}_ {&lt; n}[X]$, written as $p(X) = c_ 0 + c_ 1 X + c_ 2 X^2 + \dots + c_{n-1} X^{n-1}$</p>
+
+<p><strong>Protocol:</strong></p>
+
+<ol>
+  <li>
+    <p><strong>Compute the Quotient Polynomial</strong>:</p>
+
+    <p>Prover computes the quotient polynomial $q(X) \coloneqq \dfrac{p(X) - y_0}{X-x_0}$</p>
+
+    <p>Notice that for this to be true, there should be no remainder polynomial. This is true if the claim $p(x_0) \stackrel{?}{=} y_0$ is true. To see this, assume the claim. Then observe the polynomial $p(X) - y_0$ has a root at $X=x_0$:</p>
+
+\[\begin{align}
+ (p(X) - y_0)\mid_{X=x_0} &amp;= p(x_0) - y_0 \notag \\
+ p(x_0) - y_0 &amp;= y_0 - y_0 = 0 \notag \\
+ \end{align}\]
+
+    <p>Therefore, $X-x_0$ is a factor of it and thus the division is exact, i.e. the remainder polynomial of the division is $0$.</p>
+  </li>
+  <li>
+    <p><strong>Commit to Polynomials</strong>:</p>
+
+    <p>Prover commits to $p(X), q(X)$, that is using SRS it computes</p>
+
+\[\begin{align}
+ [p(x)]_1 &amp;= c_0[1]_1 + c_1[x]_1 + \dots + c_{n-1}[x^{n-1}]_1 \notag \\
+ [q(x)]_1 &amp;= c^q_0[1]_1 + c^q_1[x]_1 + \dots + c^q_{m-1}[x^{m-1}]_1 \notag \\
+ \end{align}\]
+
+    <p>This computation is possible due to the following facts: commitments to the powers of $x$, i.e. $[x^j]_1$, are present in the SRS, and the commitment scheme is additively homomorphic. Therefore, we can compute the scalar multiplications, e.g. $c_1[x]_1$, and then sum these scaled commitments together. This is called <strong>multiscalar multiplication (MSM)</strong>.</p>
+
+\[\begin{align}
+ [p(x)]_1 = \sum_{i=0}^{n-1} c_i[x^i]_1 \tag{$n-1$ is the degree of $p(X)$}
+ \end{align}\]
+
+    <p>Notice that the commitment is just evaluating the polynomial at $X=x$, the toxic waste, and taking that to the elliptic curve.</p>
+  </li>
+  <li>
+    <p><strong>Send Commitments</strong>:</p>
+
+    <p>Prover sends $[p(x)]_1, [q(x)]_1$ to the verifier.</p>
+  </li>
+  <li>
+    <p><strong>Verifier Check</strong>:</p>
+
+    <p>Verifier checks the equation:</p>
+
+\[\begin{align}
+ e([q(x)]_1, [x]_2 + (-x_0)[1]_2) &amp;\stackrel{?}{=} e([p(x)]_1 + (-y_0)[1]_1,[1]_2) \notag \\
+ \end{align}\]
+
+    <p>If the check passes, the verifier accepts the claim $p(x_0) \stackrel{?}{=} y_0$.</p>
+  </li>
+</ol>
+
+<h2 id="understanding-the-pairing-equation">Understanding the Pairing Equation</h2>
+
+<p>The pairing allows us to represent the multiplication of two commitments, the divisor and the quotient as a target group element (the output of the pairing). That is, we reconstructed the dividend as a target group element on the left hand side. Then, we put the expected dividend on the right hand side. Finally, we checked if the two pairings are equivalent.</p>
+
+<p>The important fact here is that we could not simply multiply the quotient and the divisor commitments because we only have addition. The pairing gave us a workaround for this: representing that multiplication as its target group’s element.</p>
+
+<p>In other words, the pairing helped us revert the division to a multiplication and check its result.</p>
+
+<p><strong>Reading a pairing equation:</strong> Apply the following transformations:</p>
+
+<ul>
+  <li>Every commitment is an evaluation at $x$, the toxic variable. Revert it by replacing $x$ with $X$.</li>
+  <li>$e(a, b)$ is just $a\cdot b$.</li>
+</ul>
+
+<p>Therefore, if we apply them to the pairing equation, we get</p>
+
+\[\begin{align}
+q(X)\cdot(X-x_0) \stackrel{?}{=} p(X) - y_0 \notag
+\end{align}\]
+
+<p>This is <em>a conceptual transformation</em> I use for ease of reading. Some information is lost during this transformation and hence it does not perfectly represent the pairing. Alternatively, Dankrad <a class="citation" href="#feist2020kate">(Feist, 2020)</a> writes this pairing in the target group:</p>
+
+\[\begin{align}
+[q(x)\cdot(x-x_0)]_T \stackrel{?}{=} [p(x) - y_0]_T \notag
+\end{align}\]
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We have seen fundamental concepts like how to compute a commitment to a polynomial, how additive homomorphism works, how pairings work, and how KZG’s protocol is designed. We will build on these in the later posts where we work on more complicated ideas.</p>
+
+<h2 id="references">References</h2>
+
+<ol class="bibliography"><li><span id="kate2010constant">Kate, A., Zaverucha, G. M., &amp; Goldberg, I. (2010). Constant-size commitments to polynomials and their applications. <i>International Conference on the Theory and Application of Cryptology and Information Security</i>, 177–194.</span></li>
+<li><span id="gabizon2019plonk">Gabizon, A., Williamson, Z. J., &amp; Ciobotaru, O. (2019). Plonk: Permutations over lagrange-bases for oecumenical noninteractive arguments of knowledge. <i>Cryptology EPrint Archive</i>.</span></li>
+<li><span id="feist2020kate">Feist, D. (2020). <i>KZG polynomial commitments</i>. Dankrad Feist’s blog. https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html</span></li></ol>
+
+  </div><a class="u-url" href="/2025/10/13/kzg-poly-commit-scheme.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Oguzhan&#39;s Tech</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Oguzhan&#39;s Tech</li><li><a class="u-email" href="mailto:hello@oguzhanstech.com">hello@oguzhanstech.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/oguzhanoztaskin"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">oguzhanoztaskin</span></a></li><li><a href="https://www.twitter.com/OguzhanOztaskin"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">OguzhanOztaskin</span></a></li><li><a href="/feed.xml"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#rss"></use></svg> <span>RSS</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

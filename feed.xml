@@ -1,4 +1,146 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://oguzhanstech.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://oguzhanstech.com/" rel="alternate" type="text/html" /><updated>2025-10-04T08:45:08+00:00</updated><id>https://oguzhanstech.com/feed.xml</id><title type="html">Oguzhan’s Tech</title><subtitle>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.</subtitle><entry><title type="html">SSL Pinning Bypass: Network Security Config</title><link href="https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-network-security-config.html" rel="alternate" type="text/html" title="SSL Pinning Bypass: Network Security Config" /><published>2025-08-25T00:00:00+00:00</published><updated>2025-08-25T00:00:00+00:00</updated><id>https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-network-security-config</id><content type="html" xml:base="https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-network-security-config.html"><![CDATA[<p>In this post, I will talk about how I bypassed the simplest SSL pinning method: <a href="https://developer.android.com/privacy-and-security/security-config">Network Security Config</a> via APK resource editing. I will also explain my setup.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://oguzhanstech.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://oguzhanstech.com/" rel="alternate" type="text/html" /><updated>2025-10-13T10:23:45+00:00</updated><id>https://oguzhanstech.com/feed.xml</id><title type="html">Oguzhan’s Tech</title><subtitle>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.</subtitle><entry><title type="html">KZG Polynomial Commitment Scheme</title><link href="https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html" rel="alternate" type="text/html" title="KZG Polynomial Commitment Scheme" /><published>2025-10-13T00:00:00+00:00</published><updated>2025-10-13T00:00:00+00:00</updated><id>https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme</id><content type="html" xml:base="https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html"><![CDATA[<p>KZG polynomial commitment scheme <a class="citation" href="#kate2010constant">(Kate et al., 2010)</a> is a fundamental building block for many zero-knowledge proof systems, including Plonk <a class="citation" href="#gabizon2019plonk">(Gabizon et al., 2019)</a>. In this post, I’ll explain how KZG works and provide the groundwork needed for understanding more complex protocols.</p>
+
+<p>My goal is making these posts implementation oriented - not too abstract. However, some used concepts will not be described in full, this will be more like <em>some notes on cryptography</em>.</p>
+
+<p>For more complete, reliable, and more reviewed text you may refer to <a href="https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html">Dankrad Feist’s blog</a> or to the original paper <a class="citation" href="#kate2010constant">(Kate et al., 2010)</a>.</p>
+
+<p><strong>Disclaimer:</strong> These are my personal notes and understanding of the topic. They may contain errors or oversimplifications. I don’t claim to provide absolute truth - rather, I invite discussion and corrections. If you spot any mistakes or have insights to share, please reach out!</p>
+
+<h2 id="preliminaries">Preliminaries</h2>
+
+<p>Some definitions and notes:</p>
+
+<p><strong>Polynomial Degree</strong>: $f \in \mathbb{F}_{&lt; n}[X]$ means $f$ is a polynomial with degree less than $n$.</p>
+
+<p><strong>Commitment Notation</strong>: The commitment of polynomial $f(X)$ is represented as $[f(x)]_1$ if it is in the first group, and $[f(x)]_2$ if it is in the second group. If no subscript is provided, it is a commitment in the first group.</p>
+
+<p><strong>Additive Homomorphism</strong>: The commitment scheme allows for addition and scalar multiplication. This means that for polynomials $f(X)$ and $g(X)$ and a scalar $c$:</p>
+<ul>
+  <li><strong>Addition</strong>: $[f(x)] + [g(x)] = [f(x) + g(x)]$</li>
+  <li><strong>Scalar Multiplication</strong>: $c[f(x)] = [c \cdot f(x)]$</li>
+</ul>
+
+<p><strong>Pairings</strong>: $e([f]_1, [g]_2)$ takes two arguments and is bilinear:</p>
+
+\[e(a[f]_1, b[g]_2) = e([f]_1, ab[g]_2) = e(ab[f]_1, [g]_2) = e([f]_1, [g]_2)^{ab}\]
+
+<h2 id="what-is-kzg">What is KZG?</h2>
+
+<p>KZG is the polynomial commitment scheme (PCS) used by Plonk, and the PCS I chose to use for my work.
+A polynomial commitment scheme is a protocol that allows the prover to commit to a polynomial, and then in zero-knowledge prove its evaluation at a given point.</p>
+
+<p>The high level idea of KZG is that</p>
+
+<ul>
+  <li>If a polynomial $p(X)$ passes through $(x_0, y_0)$, then the polynomial $p’(X) \coloneqq p(X)-y_0$ is $0$ at $X=x_0$.</li>
+  <li>Then $p’(X)$ has a root at $X=x_0$. That is, $X-x_0$ is a factor of it and if we divide $p’(X)$ by this value, the division must be exact.</li>
+  <li>If we can prove that the division is exact, for example by multiplying the quotient with the divisor and checking if the result is the same as the expected dividend, we would be proving the polynomial evaluation.</li>
+  <li>That multiplication can be proven using elliptic curves and pairings. That is what KZG does.</li>
+</ul>
+
+<p>In the following section, I explain this by showing each step.</p>
+
+<h2 id="the-protocol">The Protocol</h2>
+
+<p><strong>Claim:</strong> $p(X) \in \mathbb{F}_{&lt; n}[X]$ is a private polynomial and it passes through the public point $(x_0, y_0)$.</p>
+
+<p><strong>Setup:</strong> Trusted setup provides the commitments $[1]_1, [x]_1, [x^2]_1, \dots, [x^{n-1}]_1$ and $[1]_2, [x]_2$. This is called the Structured Reference String, or SRS for short.</p>
+
+<p>Here, $x$ is a toxic variable that no one should know. It is required for the generation of SRS, but then it must be destroyed. Because if someone knows $x$, they can make false proofs, i.e. showing a polynomial passes through a point when it actually does not.</p>
+
+<p><strong>Common Inputs:</strong> $(x_0, y_0) \in \mathbb{F}^2$</p>
+
+<p><strong>Prover Inputs:</strong> $p(X) \in \mathbb{F}_ {&lt; n}[X]$, written as $p(X) = c_ 0 + c_ 1 X + c_ 2 X^2 + \dots + c_{n-1} X^{n-1}$</p>
+
+<p><strong>Protocol:</strong></p>
+
+<ol>
+  <li>
+    <p><strong>Compute the Quotient Polynomial</strong>:</p>
+
+    <p>Prover computes the quotient polynomial $q(X) \coloneqq \dfrac{p(X) - y_0}{X-x_0}$</p>
+
+    <p>Notice that for this to be true, there should be no remainder polynomial. This is true if the claim $p(x_0) \stackrel{?}{=} y_0$ is true. To see this, assume the claim. Then observe the polynomial $p(X) - y_0$ has a root at $X=x_0$:</p>
+
+\[\begin{align}
+ (p(X) - y_0)\mid_{X=x_0} &amp;= p(x_0) - y_0 \notag \\
+ p(x_0) - y_0 &amp;= y_0 - y_0 = 0 \notag \\
+ \end{align}\]
+
+    <p>Therefore, $X-x_0$ is a factor of it and thus the division is exact, i.e. the remainder polynomial of the division is $0$.</p>
+  </li>
+  <li>
+    <p><strong>Commit to Polynomials</strong>:</p>
+
+    <p>Prover commits to $p(X), q(X)$, that is using SRS it computes</p>
+
+\[\begin{align}
+ [p(x)]_1 &amp;= c_0[1]_1 + c_1[x]_1 + \dots + c_{n-1}[x^{n-1}]_1 \notag \\
+ [q(x)]_1 &amp;= c^q_0[1]_1 + c^q_1[x]_1 + \dots + c^q_{m-1}[x^{m-1}]_1 \notag \\
+ \end{align}\]
+
+    <p>This computation is possible due to the following facts: commitments to the powers of $x$, i.e. $[x^j]_1$, are present in the SRS, and the commitment scheme is additively homomorphic. Therefore, we can compute the scalar multiplications, e.g. $c_1[x]_1$, and then sum these scaled commitments together. This is called <strong>multiscalar multiplication (MSM)</strong>.</p>
+
+\[\begin{align}
+ [p(x)]_1 = \sum_{i=0}^{n-1} c_i[x^i]_1 \tag{$n-1$ is the degree of $p(X)$}
+ \end{align}\]
+
+    <p>Notice that the commitment is just evaluating the polynomial at $X=x$, the toxic waste, and taking that to the elliptic curve.</p>
+  </li>
+  <li>
+    <p><strong>Send Commitments</strong>:</p>
+
+    <p>Prover sends $[p(x)]_1, [q(x)]_1$ to the verifier.</p>
+  </li>
+  <li>
+    <p><strong>Verifier Check</strong>:</p>
+
+    <p>Verifier checks the equation:</p>
+
+\[\begin{align}
+ e([q(x)]_1, [x]_2 + (-x_0)[1]_2) &amp;\stackrel{?}{=} e([p(x)]_1 + (-y_0)[1]_1,[1]_2) \notag \\
+ \end{align}\]
+
+    <p>If the check passes, the verifier accepts the claim $p(x_0) \stackrel{?}{=} y_0$.</p>
+  </li>
+</ol>
+
+<h2 id="understanding-the-pairing-equation">Understanding the Pairing Equation</h2>
+
+<p>The pairing allows us to represent the multiplication of two commitments, the divisor and the quotient as a target group element (the output of the pairing). That is, we reconstructed the dividend as a target group element on the left hand side. Then, we put the expected dividend on the right hand side. Finally, we checked if the two pairings are equivalent.</p>
+
+<p>The important fact here is that we could not simply multiply the quotient and the divisor commitments because we only have addition. The pairing gave us a workaround for this: representing that multiplication as its target group’s element.</p>
+
+<p>In other words, the pairing helped us revert the division to a multiplication and check its result.</p>
+
+<p><strong>Reading a pairing equation:</strong> Apply the following transformations:</p>
+
+<ul>
+  <li>Every commitment is an evaluation at $x$, the toxic variable. Revert it by replacing $x$ with $X$.</li>
+  <li>$e(a, b)$ is just $a\cdot b$.</li>
+</ul>
+
+<p>Therefore, if we apply them to the pairing equation, we get</p>
+
+\[\begin{align}
+q(X)\cdot(X-x_0) \stackrel{?}{=} p(X) - y_0 \notag
+\end{align}\]
+
+<p>This is <em>a conceptual transformation</em> I use for ease of reading. Some information is lost during this transformation and hence it does not perfectly represent the pairing. Alternatively, Dankrad <a class="citation" href="#feist2020kate">(Feist, 2020)</a> writes this pairing in the target group:</p>
+
+\[\begin{align}
+[q(x)\cdot(x-x_0)]_T \stackrel{?}{=} [p(x) - y_0]_T \notag
+\end{align}\]
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We have seen fundamental concepts like how to compute a commitment to a polynomial, how additive homomorphism works, how pairings work, and how KZG’s protocol is designed. We will build on these in the later posts where we work on more complicated ideas.</p>
+
+<h2 id="references">References</h2>
+
+<ol class="bibliography"><li><span id="kate2010constant">Kate, A., Zaverucha, G. M., &amp; Goldberg, I. (2010). Constant-size commitments to polynomials and their applications. <i>International Conference on the Theory and Application of Cryptology and Information Security</i>, 177–194.</span></li>
+<li><span id="gabizon2019plonk">Gabizon, A., Williamson, Z. J., &amp; Ciobotaru, O. (2019). Plonk: Permutations over lagrange-bases for oecumenical noninteractive arguments of knowledge. <i>Cryptology EPrint Archive</i>.</span></li>
+<li><span id="feist2020kate">Feist, D. (2020). <i>KZG polynomial commitments</i>. Dankrad Feist’s blog. https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html</span></li></ol>]]></content><author><name></name></author><category term="cryptography" /><category term="zkp" /><category term="kzg" /><category term="commitment schemes" /><summary type="html"><![CDATA[KZG polynomial commitment scheme (Kate et al., 2010) is a fundamental building block for many zero-knowledge proof systems, including Plonk (Gabizon et al., 2019). In this post, I’ll explain how KZG works and provide the groundwork needed for understanding more complex protocols.]]></summary></entry><entry><title type="html">SSL Pinning Bypass: Network Security Config</title><link href="https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-network-security-config.html" rel="alternate" type="text/html" title="SSL Pinning Bypass: Network Security Config" /><published>2025-08-25T00:00:00+00:00</published><updated>2025-08-25T00:00:00+00:00</updated><id>https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-network-security-config</id><content type="html" xml:base="https://oguzhanstech.com/2025/08/25/ssl-pinning-bypass-network-security-config.html"><![CDATA[<p>In this post, I will talk about how I bypassed the simplest SSL pinning method: <a href="https://developer.android.com/privacy-and-security/security-config">Network Security Config</a> via APK resource editing. I will also explain my setup.</p>
 
 <p>I assume you know how to use the tools mitmproxy, an Android proxy client, apktool, adb and do not detail it here.</p>
 
