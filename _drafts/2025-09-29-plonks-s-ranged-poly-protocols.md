@@ -8,7 +8,7 @@ math_heavy: true
 
 In this post we will analyze Plonk's {% cite gabizon2019plonk %} *S-ranged polynomial protocols* that it introduces in its section 4.1.
 
-If you have not read already, you should see my [previous post]({% post_url 2025-09-29-kzg-poly-commit-scheme %}) as this post will extend on the notions introduced there.
+If you have not read already, you should see my [previous post]({% post_url 2025-10-13-kzg-poly-commit-scheme %}) as this post will extend on the notions introduced there.
 
 
 **Disclaimer:** These are my personal notes and understanding of the topic. They may contain errors or oversimplifications. I don't claim to provide absolute truth - rather, I invite discussion and corrections. If you spot any mistakes or have insights to share, please reach out!
@@ -39,7 +39,7 @@ Some definitions and notes:
   
   In other words, it takes the value $1$ at the $i$-th point of $H$, and takes the value $0$ for all other values of $H$.
 
-- **KZG**: See my [previous post]({% post_url 2025-09-29-kzg-poly-commit-scheme %}).
+- **KZG**: See my [previous post]({% post_url 2025-10-13-kzg-poly-commit-scheme %}).
 
 ## Plonk's S-Ranged Polynomial Protocols
 
