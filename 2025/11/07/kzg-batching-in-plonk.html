@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" type="image/png" href="/favicon.png"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>KZG Batching in Plonk | Oguzhan’s Tech</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="KZG Batching in Plonk" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="In my last post, we explored the KZG Polynomial Commitment Scheme, a powerful tool for proving that a secret polynomial $p(X)$ evaluates to a certain value $y$ at a public point $z$. That is, we can prove the claim $p(z) = y$." />
+<meta property="og:description" content="In my last post, we explored the KZG Polynomial Commitment Scheme, a powerful tool for proving that a secret polynomial $p(X)$ evaluates to a certain value $y$ at a public point $z$. That is, we can prove the claim $p(z) = y$." />
+<link rel="canonical" href="https://oguzhanstech.com/2025/11/07/kzg-batching-in-plonk.html" />
+<meta property="og:url" content="https://oguzhanstech.com/2025/11/07/kzg-batching-in-plonk.html" />
+<meta property="og:site_name" content="Oguzhan’s Tech" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2025-11-07T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="KZG Batching in Plonk" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2025-11-07T00:00:00+00:00","datePublished":"2025-11-07T00:00:00+00:00","description":"In my last post, we explored the KZG Polynomial Commitment Scheme, a powerful tool for proving that a secret polynomial $p(X)$ evaluates to a certain value $y$ at a public point $z$. That is, we can prove the claim $p(z) = y$.","headline":"KZG Batching in Plonk","mainEntityOfPage":{"@type":"WebPage","@id":"https://oguzhanstech.com/2025/11/07/kzg-batching-in-plonk.html"},"url":"https://oguzhanstech.com/2025/11/07/kzg-batching-in-plonk.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css">
+  
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous"><link type="application/atom+xml" rel="alternate" href="https://oguzhanstech.com/feed.xml" title="Oguzhan&apos;s Tech" /><!-- KaTeX JavaScript -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+  
+          onload='
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: "$", right: "$", display: false},
+    {left: "\\(", right: "\\)", display: true},
+    {left: "\\[", right: "\\]", display: true} // use $$ in md, it is internally changed to \[ and \] 
+  ]
+});'></script>
+</head><body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Oguzhan&#39;s Tech</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/archive/">Archive</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper ">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">KZG Batching in Plonk</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2025-11-07T00:00:00+00:00" itemprop="datePublished">Nov 7, 2025
+      </time></p><div class="post-tags"><a href="/archive/#cryptography" class="tag-link">cryptography</a><a href="/archive/#zkp" class="tag-link">zkp</a><a href="/archive/#plonk" class="tag-link">plonk</a><a href="/archive/#polynomials" class="tag-link">polynomials</a><a href="/archive/#kzg" class="tag-link">kzg</a></div></header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>In my last post, we explored the <a href="/2025/10/13/kzg-poly-commit-scheme.html">KZG Polynomial Commitment Scheme</a>, a powerful tool for proving that a secret polynomial $p(X)$ evaluates to a certain value $y$ at a public point $z$. That is, we can prove the claim $p(z) = y$.</p>
+
+<p>This is a fantastic building block, but in larger systems like Plonk <a class="citation" href="#gabizon2019plonk">(Gabizon et al., 2019)</a>, we often need to prove more than just one evaluation. We need to prove that a polynomial equation holds true over an entire <em>set</em> of points. For example, we might need to prove $P(x) = 0$ for every single $x$ in a domain $H$.</p>
+
+<p>How could we do this? We could run a separate KZG proof for every point in $H$, but if $H$ has thousands of elements, our proof would become enormous and the verification process painfully slow. We need a more efficient way to bundle all these checks into one.</p>
+
+<p>The answer we are looking for is the use of KZG batching. Plonk utilizes a form of batching that’s well-suited for its constraint system, and in this post we are going to take a closer look into that approach.</p>
+
+<p>Alternative posts that I recommend are the original paper’s Batch Opening paragraph <a class="citation" href="#kate2010constant">(Kate et al., 2010)</a> and <a href="https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html">Dankrad Feist’s blog post’s Multiproof section</a>.</p>
+
+<p><strong>Disclaimer:</strong> These are my personal notes and understanding of the topic. They may contain errors or oversimplifications. I don’t claim to provide absolute truth - rather, I invite discussion and corrections. If you spot any mistakes or have insights to share, please reach out!</p>
+
+<h2 id="preliminaries">Preliminaries</h2>
+
+<p>Some definitions and notes we’ll be using:</p>
+
+<ul>
+  <li>
+    <p><strong>Polynomial Degree</strong>: $f \in \mathbb{F}_{&lt; n}[X]$ means $f$ is a polynomial with degree less than $n$.</p>
+  </li>
+  <li>
+    <p><strong>Commitment Notation</strong>: The commitment of a polynomial $f(X)$ is represented as $[f(x)]_1$. Unless specified, commitments are in the first group, $\mathbb{G}_1$.</p>
+  </li>
+  <li><strong>Additive Homomorphism</strong>: Our commitment scheme is additively homomorphic. For polynomials $f(X)$, $g(X)$ and a scalar $c$:
+    <ul>
+      <li><strong>Addition</strong>: $[f(x)] + [g(x)] = [f(x) + g(x)]$</li>
+      <li><strong>Scalar Multiplication</strong>: $c[f(x)] = [c \cdot f(x)]$</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Pairings</strong>: $e([f]_1, [g]_2)$ is our bilinear pairing function.</p>
+  </li>
+  <li>
+    <p><strong>Vanishing Polynomial</strong>: For a set of points $S = {s_0, s_1, \dots, s_{k-1}}$, the vanishing polynomial is defined as:
+\(Z_S(X) \coloneqq \prod_{i=0}^{k-1} (X - s_i)\)
+This polynomial has a crucial property: it evaluates to $0$ for every single point in the set $S$.</p>
+  </li>
+  <li><strong>Prerequisites</strong>: I’ll assume you’re familiar with the concepts from my <a href="/2025/10/13/kzg-poly-commit-scheme.html">previous post on KZG</a>.</li>
+</ul>
+
+<h2 id="the-core-idea-from-many-checks-to-one">The Core Idea: From Many Checks to One</h2>
+
+<p>Let’s say we have a claim: a secret polynomial $P(X)$ is equal to $0$ on every point in a public domain $H$.</p>
+
+<p>The key insight is this: a polynomial $P(X)$ is zero at every point $h$ in $H$ <em>if and only if</em> it is divisible by the vanishing polynomial $Z_H(X)$.</p>
+
+<p>Why is this true? From basic algebra, we know that if $P(h) = 0$, then $(X-h)$ must be a factor of $P(X)$. If this is true for <em>all</em> $h$ in $H$, then the product of all those factors, which is exactly our vanishing polynomial $Z_H(X)$, must also be a factor of $P(X)$.</p>
+
+<p>This means that if our claim is true, the division must be exact. We can define a quotient polynomial $Q(X)$ like this:</p>
+
+\[Q(X) \coloneqq \dfrac{P(X)}{Z_H(X)}\]
+
+<p>This single equation, $P(X) = Q(X) \cdot Z_H(X)$, is equivalent to the $n$ individual checks we started with! Now, our task has been reduced to proving that this new polynomial identity is true.</p>
+
+<h2 id="the-protocol">The Protocol</h2>
+
+<p>How can a prover convince a verifier of this identity? They can’t just send the polynomial $Q(X)$, because $P(X)$ is secret, so $Q(X)$ must also be secret.</p>
+
+<p>Instead, we can use polynomial commitments and a random challenge point, very similar to what we did in KZG. By the Schwartz-Zippel lemma, if two polynomials are equal, they will evaluate to the same value at a random point $\zeta$ with very high probability.</p>
+
+<p>So, the verifier will check the identity $P(\zeta) = Q(\zeta) \cdot Z_H(\zeta)$.</p>
+
+<p><strong>Claim:</strong> A secret polynomial $P(X)$ is $0$ on the public domain $H$.</p>
+
+<p><strong>Common Inputs:</strong> The vanishing polynomial for the domain $H$, which is $Z_H(X)$.</p>
+
+<p><strong>Prover Inputs:</strong> The secret polynomial $P(X)$.</p>
+
+<p><strong>Protocol:</strong></p>
+
+<ol>
+  <li>
+    <p><strong>Compute the Quotient Polynomial</strong>:
+The prover computes the quotient $Q(X) = \dfrac{P(X)}{Z_H(X)}$. If the claim is false, this division will have a non-zero remainder, and the protocol will fail.</p>
+  </li>
+  <li>
+    <p><strong>Commit to Polynomials</strong>:
+The prover commits to the secret polynomials $P(X)$ and $Q(X)$ and sends the commitments $[P(x)]_1$ and $[Q(x)]_1$ to the verifier.</p>
+  </li>
+  <li>
+    <p><strong>Get Random Challenge</strong>:
+The verifier generates a random challenge scalar $\zeta$ (zeta) and sends it to the prover. (In a real system, this would be derived from the transcript using Fiat-Shamir).</p>
+  </li>
+  <li>
+    <p><strong>Prove the Evaluation</strong>:
+The prover and verifier now want to check the identity $P(\zeta) - Q(\zeta) \cdot Z_H(\zeta) = 0$. This is an evaluation proof! The prover needs to prove that the remainder polynomial $R(X) \coloneqq P(X) - Z_H(\zeta) \cdot Q(X)$ evaluates to $0$ at $X = \zeta$.</p>
+
+    <p>Notice a subtle but important detail here. In the expression for $R(X)$, we use $Z_H(\zeta)$. This is the <em>evaluation</em> of the public polynomial $Z_H(X)$ at the point $\zeta$, which is just a scalar value. We do this because we can’t multiply two commitments together, but we <em>can</em> multiply a commitment by a scalar. Later on, we need to evaluate the entire expression at $\zeta$, so putting $Z_H(X)$’s evaluation here does not cause trouble.</p>
+
+    <p>To prove $R(\zeta) = 0$, the prover computes the KZG witness polynomial:</p>
+
+\[W_\zeta(X) \coloneqq \dfrac{R(X)}{X-\zeta} = \dfrac{P(X) - Z_H(\zeta) \cdot Q(X)}{X-\zeta}\]
+
+    <p>The prover commits to this witness, $[W_\zeta(x)]_1$, and sends it to the verifier.</p>
+  </li>
+  <li>
+    <p><strong>Verifier Check</strong>:
+The verifier now has all the pieces: $[P(x)]_ 1$, $[Q(x)]_ 1$, and $[W_\zeta(x)]_ 1$. They can perform the final check using a single pairing equation. The verifier wants to confirm that</p>
+
+\[\begin{align}
+W_\zeta(X) \cdot (X - \zeta) &amp;- R(X) &amp;= 0 \notag \\
+W_\zeta(X) \cdot (X - \zeta) &amp;- (P(X) - Z_H(\zeta)\cdot Q(X)) &amp;= 0 \notag
+\end{align}\]
+
+    <p>and for that it uses the committed values in the following check:</p>
+
+\[e([W_\zeta(x)]_1, [x]_2 - \zeta[1]_2) \stackrel{?}{=} e([P(x)]_1 - Z_H(\zeta)[Q(x)]_1, [1]_2)\]
+
+    <p>Notice that this equation forces the prover to use the committed polynomial $P(X)$, the provided quotient $Q(X)$ to be the true division, and hence the right hand side effectively calculates $[R(x)]_1$.</p>
+
+    <p>Then, the left hand side is designed so that it only holds if $R(X)$ is $0$ at $\zeta$, a random point. As we explained before, this implies the remainder polynomial is exactly $0$ everywhere, that is the division is exact, and therefore $P(X)$ is $0$ on $H$.</p>
+  </li>
+</ol>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We’ve just learned a powerful and efficient technique. We’ve managed to take a claim that required $n$ separate checks ($P(x) = 0$ for all $x$ in $H$) and compress it into a single, compact proof that requires only a few commitments and one pairing check.</p>
+
+<h2 id="references">References</h2>
+
+<ol class="bibliography"><li><span id="gabizon2019plonk">Gabizon, A., Williamson, Z. J., &amp; Ciobotaru, O. (2019). Plonk: Permutations over lagrange-bases for oecumenical noninteractive arguments of knowledge. <i>Cryptology EPrint Archive</i>.</span></li>
+<li><span id="kate2010constant">Kate, A., Zaverucha, G. M., &amp; Goldberg, I. (2010). Constant-size commitments to polynomials and their applications. <i>International Conference on the Theory and Application of Cryptology and Information Security</i>, 177–194.</span></li></ol>
+
+  </div><a class="u-url" href="/2025/11/07/kzg-batching-in-plonk.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Oguzhan&#39;s Tech</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Oguzhan&#39;s Tech</li><li><a class="u-email" href="mailto:hello@oguzhanstech.com">hello@oguzhanstech.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/oguzhanoztaskin"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">oguzhanoztaskin</span></a></li><li><a href="https://www.twitter.com/OguzhanOztaskin"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">OguzhanOztaskin</span></a></li><li><a href="/feed.xml"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#rss"></use></svg> <span>RSS</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,4 +1,125 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://oguzhanstech.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://oguzhanstech.com/" rel="alternate" type="text/html" /><updated>2025-10-13T10:23:45+00:00</updated><id>https://oguzhanstech.com/feed.xml</id><title type="html">Oguzhan’s Tech</title><subtitle>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.</subtitle><entry><title type="html">KZG Polynomial Commitment Scheme</title><link href="https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html" rel="alternate" type="text/html" title="KZG Polynomial Commitment Scheme" /><published>2025-10-13T00:00:00+00:00</published><updated>2025-10-13T00:00:00+00:00</updated><id>https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme</id><content type="html" xml:base="https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html"><![CDATA[<p>KZG polynomial commitment scheme <a class="citation" href="#kate2010constant">(Kate et al., 2010)</a> is a fundamental building block for many zero-knowledge proof systems, including Plonk <a class="citation" href="#gabizon2019plonk">(Gabizon et al., 2019)</a>. In this post, I’ll explain how KZG works and provide the groundwork needed for understanding more complex protocols.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://oguzhanstech.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://oguzhanstech.com/" rel="alternate" type="text/html" /><updated>2025-11-07T12:53:04+00:00</updated><id>https://oguzhanstech.com/feed.xml</id><title type="html">Oguzhan’s Tech</title><subtitle>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.</subtitle><entry><title type="html">KZG Batching in Plonk</title><link href="https://oguzhanstech.com/2025/11/07/kzg-batching-in-plonk.html" rel="alternate" type="text/html" title="KZG Batching in Plonk" /><published>2025-11-07T00:00:00+00:00</published><updated>2025-11-07T00:00:00+00:00</updated><id>https://oguzhanstech.com/2025/11/07/kzg-batching-in-plonk</id><content type="html" xml:base="https://oguzhanstech.com/2025/11/07/kzg-batching-in-plonk.html"><![CDATA[<p>In my last post, we explored the <a href="/2025/10/13/kzg-poly-commit-scheme.html">KZG Polynomial Commitment Scheme</a>, a powerful tool for proving that a secret polynomial $p(X)$ evaluates to a certain value $y$ at a public point $z$. That is, we can prove the claim $p(z) = y$.</p>
+
+<p>This is a fantastic building block, but in larger systems like Plonk <a class="citation" href="#gabizon2019plonk">(Gabizon et al., 2019)</a>, we often need to prove more than just one evaluation. We need to prove that a polynomial equation holds true over an entire <em>set</em> of points. For example, we might need to prove $P(x) = 0$ for every single $x$ in a domain $H$.</p>
+
+<p>How could we do this? We could run a separate KZG proof for every point in $H$, but if $H$ has thousands of elements, our proof would become enormous and the verification process painfully slow. We need a more efficient way to bundle all these checks into one.</p>
+
+<p>The answer we are looking for is the use of KZG batching. Plonk utilizes a form of batching that’s well-suited for its constraint system, and in this post we are going to take a closer look into that approach.</p>
+
+<p>Alternative posts that I recommend are the original paper’s Batch Opening paragraph <a class="citation" href="#kate2010constant">(Kate et al., 2010)</a> and <a href="https://dankradfeist.de/ethereum/2020/06/16/kate-polynomial-commitments.html">Dankrad Feist’s blog post’s Multiproof section</a>.</p>
+
+<p><strong>Disclaimer:</strong> These are my personal notes and understanding of the topic. They may contain errors or oversimplifications. I don’t claim to provide absolute truth - rather, I invite discussion and corrections. If you spot any mistakes or have insights to share, please reach out!</p>
+
+<h2 id="preliminaries">Preliminaries</h2>
+
+<p>Some definitions and notes we’ll be using:</p>
+
+<ul>
+  <li>
+    <p><strong>Polynomial Degree</strong>: $f \in \mathbb{F}_{&lt; n}[X]$ means $f$ is a polynomial with degree less than $n$.</p>
+  </li>
+  <li>
+    <p><strong>Commitment Notation</strong>: The commitment of a polynomial $f(X)$ is represented as $[f(x)]_1$. Unless specified, commitments are in the first group, $\mathbb{G}_1$.</p>
+  </li>
+  <li><strong>Additive Homomorphism</strong>: Our commitment scheme is additively homomorphic. For polynomials $f(X)$, $g(X)$ and a scalar $c$:
+    <ul>
+      <li><strong>Addition</strong>: $[f(x)] + [g(x)] = [f(x) + g(x)]$</li>
+      <li><strong>Scalar Multiplication</strong>: $c[f(x)] = [c \cdot f(x)]$</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Pairings</strong>: $e([f]_1, [g]_2)$ is our bilinear pairing function.</p>
+  </li>
+  <li>
+    <p><strong>Vanishing Polynomial</strong>: For a set of points $S = {s_0, s_1, \dots, s_{k-1}}$, the vanishing polynomial is defined as:
+\(Z_S(X) \coloneqq \prod_{i=0}^{k-1} (X - s_i)\)
+This polynomial has a crucial property: it evaluates to $0$ for every single point in the set $S$.</p>
+  </li>
+  <li><strong>Prerequisites</strong>: I’ll assume you’re familiar with the concepts from my <a href="/2025/10/13/kzg-poly-commit-scheme.html">previous post on KZG</a>.</li>
+</ul>
+
+<h2 id="the-core-idea-from-many-checks-to-one">The Core Idea: From Many Checks to One</h2>
+
+<p>Let’s say we have a claim: a secret polynomial $P(X)$ is equal to $0$ on every point in a public domain $H$.</p>
+
+<p>The key insight is this: a polynomial $P(X)$ is zero at every point $h$ in $H$ <em>if and only if</em> it is divisible by the vanishing polynomial $Z_H(X)$.</p>
+
+<p>Why is this true? From basic algebra, we know that if $P(h) = 0$, then $(X-h)$ must be a factor of $P(X)$. If this is true for <em>all</em> $h$ in $H$, then the product of all those factors, which is exactly our vanishing polynomial $Z_H(X)$, must also be a factor of $P(X)$.</p>
+
+<p>This means that if our claim is true, the division must be exact. We can define a quotient polynomial $Q(X)$ like this:</p>
+
+\[Q(X) \coloneqq \dfrac{P(X)}{Z_H(X)}\]
+
+<p>This single equation, $P(X) = Q(X) \cdot Z_H(X)$, is equivalent to the $n$ individual checks we started with! Now, our task has been reduced to proving that this new polynomial identity is true.</p>
+
+<h2 id="the-protocol">The Protocol</h2>
+
+<p>How can a prover convince a verifier of this identity? They can’t just send the polynomial $Q(X)$, because $P(X)$ is secret, so $Q(X)$ must also be secret.</p>
+
+<p>Instead, we can use polynomial commitments and a random challenge point, very similar to what we did in KZG. By the Schwartz-Zippel lemma, if two polynomials are equal, they will evaluate to the same value at a random point $\zeta$ with very high probability.</p>
+
+<p>So, the verifier will check the identity $P(\zeta) = Q(\zeta) \cdot Z_H(\zeta)$.</p>
+
+<p><strong>Claim:</strong> A secret polynomial $P(X)$ is $0$ on the public domain $H$.</p>
+
+<p><strong>Common Inputs:</strong> The vanishing polynomial for the domain $H$, which is $Z_H(X)$.</p>
+
+<p><strong>Prover Inputs:</strong> The secret polynomial $P(X)$.</p>
+
+<p><strong>Protocol:</strong></p>
+
+<ol>
+  <li>
+    <p><strong>Compute the Quotient Polynomial</strong>:
+The prover computes the quotient $Q(X) = \dfrac{P(X)}{Z_H(X)}$. If the claim is false, this division will have a non-zero remainder, and the protocol will fail.</p>
+  </li>
+  <li>
+    <p><strong>Commit to Polynomials</strong>:
+The prover commits to the secret polynomials $P(X)$ and $Q(X)$ and sends the commitments $[P(x)]_1$ and $[Q(x)]_1$ to the verifier.</p>
+  </li>
+  <li>
+    <p><strong>Get Random Challenge</strong>:
+The verifier generates a random challenge scalar $\zeta$ (zeta) and sends it to the prover. (In a real system, this would be derived from the transcript using Fiat-Shamir).</p>
+  </li>
+  <li>
+    <p><strong>Prove the Evaluation</strong>:
+The prover and verifier now want to check the identity $P(\zeta) - Q(\zeta) \cdot Z_H(\zeta) = 0$. This is an evaluation proof! The prover needs to prove that the remainder polynomial $R(X) \coloneqq P(X) - Z_H(\zeta) \cdot Q(X)$ evaluates to $0$ at $X = \zeta$.</p>
+
+    <p>Notice a subtle but important detail here. In the expression for $R(X)$, we use $Z_H(\zeta)$. This is the <em>evaluation</em> of the public polynomial $Z_H(X)$ at the point $\zeta$, which is just a scalar value. We do this because we can’t multiply two commitments together, but we <em>can</em> multiply a commitment by a scalar. Later on, we need to evaluate the entire expression at $\zeta$, so putting $Z_H(X)$’s evaluation here does not cause trouble.</p>
+
+    <p>To prove $R(\zeta) = 0$, the prover computes the KZG witness polynomial:</p>
+
+\[W_\zeta(X) \coloneqq \dfrac{R(X)}{X-\zeta} = \dfrac{P(X) - Z_H(\zeta) \cdot Q(X)}{X-\zeta}\]
+
+    <p>The prover commits to this witness, $[W_\zeta(x)]_1$, and sends it to the verifier.</p>
+  </li>
+  <li>
+    <p><strong>Verifier Check</strong>:
+The verifier now has all the pieces: $[P(x)]_ 1$, $[Q(x)]_ 1$, and $[W_\zeta(x)]_ 1$. They can perform the final check using a single pairing equation. The verifier wants to confirm that</p>
+
+\[\begin{align}
+W_\zeta(X) \cdot (X - \zeta) &amp;- R(X) &amp;= 0 \notag \\
+W_\zeta(X) \cdot (X - \zeta) &amp;- (P(X) - Z_H(\zeta)\cdot Q(X)) &amp;= 0 \notag
+\end{align}\]
+
+    <p>and for that it uses the committed values in the following check:</p>
+
+\[e([W_\zeta(x)]_1, [x]_2 - \zeta[1]_2) \stackrel{?}{=} e([P(x)]_1 - Z_H(\zeta)[Q(x)]_1, [1]_2)\]
+
+    <p>Notice that this equation forces the prover to use the committed polynomial $P(X)$, the provided quotient $Q(X)$ to be the true division, and hence the right hand side effectively calculates $[R(x)]_1$.</p>
+
+    <p>Then, the left hand side is designed so that it only holds if $R(X)$ is $0$ at $\zeta$, a random point. As we explained before, this implies the remainder polynomial is exactly $0$ everywhere, that is the division is exact, and therefore $P(X)$ is $0$ on $H$.</p>
+  </li>
+</ol>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>We’ve just learned a powerful and efficient technique. We’ve managed to take a claim that required $n$ separate checks ($P(x) = 0$ for all $x$ in $H$) and compress it into a single, compact proof that requires only a few commitments and one pairing check.</p>
+
+<h2 id="references">References</h2>
+
+<ol class="bibliography"><li><span id="gabizon2019plonk">Gabizon, A., Williamson, Z. J., &amp; Ciobotaru, O. (2019). Plonk: Permutations over lagrange-bases for oecumenical noninteractive arguments of knowledge. <i>Cryptology EPrint Archive</i>.</span></li>
+<li><span id="kate2010constant">Kate, A., Zaverucha, G. M., &amp; Goldberg, I. (2010). Constant-size commitments to polynomials and their applications. <i>International Conference on the Theory and Application of Cryptology and Information Security</i>, 177–194.</span></li></ol>]]></content><author><name></name></author><category term="cryptography" /><category term="zkp" /><category term="plonk" /><category term="polynomials" /><category term="kzg" /><summary type="html"><![CDATA[In my last post, we explored the KZG Polynomial Commitment Scheme, a powerful tool for proving that a secret polynomial $p(X)$ evaluates to a certain value $y$ at a public point $z$. That is, we can prove the claim $p(z) = y$.]]></summary></entry><entry><title type="html">KZG Polynomial Commitment Scheme</title><link href="https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html" rel="alternate" type="text/html" title="KZG Polynomial Commitment Scheme" /><published>2025-10-13T00:00:00+00:00</published><updated>2025-10-13T00:00:00+00:00</updated><id>https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme</id><content type="html" xml:base="https://oguzhanstech.com/2025/10/13/kzg-poly-commit-scheme.html"><![CDATA[<p>KZG polynomial commitment scheme <a class="citation" href="#kate2010constant">(Kate et al., 2010)</a> is a fundamental building block for many zero-knowledge proof systems, including Plonk <a class="citation" href="#gabizon2019plonk">(Gabizon et al., 2019)</a>. In this post, I’ll explain how KZG works and provide the groundwork needed for understanding more complex protocols.</p>
 
 <p>My goal is making these posts implementation oriented - not too abstract. However, some used concepts will not be described in full, this will be more like <em>some notes on cryptography</em>.</p>
 
