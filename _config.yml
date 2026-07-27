@@ -21,7 +21,7 @@
 title: Oguzhan's Tech
 email: hello@oguzhanstech.com
 description: >- # this means to ignore newlines until "baseurl:"
-  A blog about my hustles, which are mostly about cryptography, cyber security, or software projects.
+  A blog about my hustles, which are mostly about cryptography, cyber security, or software projects. I fill in my posts/projects with the help of LLMs.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://oguzhanstech.com" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: OguzhanOztaskin
