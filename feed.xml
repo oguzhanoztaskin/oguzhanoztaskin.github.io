@@ -1,4 +1,58 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://oguzhanstech.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://oguzhanstech.com/" rel="alternate" type="text/html" /><updated>2026-08-05T18:35:40+00:00</updated><id>https://oguzhanstech.com/feed.xml</id><title type="html">Oguzhan’s Tech</title><subtitle>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects. I fill in my posts/projects with the help of LLMs.</subtitle><entry><title type="html">A Zero-Knowledge Sudoku Prover</title><link href="https://oguzhanstech.com/2026/07/21/zk-sudoku-prover.html" rel="alternate" type="text/html" title="A Zero-Knowledge Sudoku Prover" /><published>2026-07-21T00:00:00+00:00</published><updated>2026-07-21T00:00:00+00:00</updated><id>https://oguzhanstech.com/2026/07/21/zk-sudoku-prover</id><content type="html" xml:base="https://oguzhanstech.com/2026/07/21/zk-sudoku-prover.html"><![CDATA[<p>In the previous posts we built up some machinery: the <a href="/2025/10/13/kzg-poly-commit-scheme.html">KZG Polynomial Commitment Scheme</a> for committing to a secret polynomial and proving its evaluations, and <a href="/2025/11/07/kzg-batching-in-plonk.html">KZG Batching in Plonk</a> for turning “this polynomial is zero on the whole domain $H$” into a single quotient check. I promised these would pay off in a later post where we do something more complicated. This is that post.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://oguzhanstech.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://oguzhanstech.com/" rel="alternate" type="text/html" /><updated>2026-10-29T14:05:44+00:00</updated><id>https://oguzhanstech.com/feed.xml</id><title type="html">Oguzhan’s Tech</title><subtitle>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects. I fill in my posts/projects with the help of LLMs.</subtitle><entry><title type="html">Hybrid VPN: A Swiss Army Knife for Android Networking</title><link href="https://oguzhanstech.com/2026/10/29/hybrid-vpn.html" rel="alternate" type="text/html" title="Hybrid VPN: A Swiss Army Knife for Android Networking" /><published>2026-10-29T00:00:00+00:00</published><updated>2026-10-29T00:00:00+00:00</updated><id>https://oguzhanstech.com/2026/10/29/hybrid-vpn</id><content type="html" xml:base="https://oguzhanstech.com/2026/10/29/hybrid-vpn.html"><![CDATA[<p>I made an Android VPN app because I was tired of managing separate apps for different networking needs. I wanted DNS filtering, access to my devices through Tailscale, OpenVPN for my university network, and an HTTP proxy for debugging. Sometimes I wanted more than one of these active at the same time.</p>
+
+<p>Android gets in the way here: <a href="https://developer.android.com/develop/connectivity/vpn#service">only one VPN service can be active per user or profile</a>. Starting another stops the existing one. A DNS-filtering app can therefore compete for the same slot as Tailscale or OpenVPN, even though I use them for very different purposes.</p>
+
+<p>There were other annoyances too: ads, apps I did not particularly trust, and the battery cost of keeping networking tools running. LLMs had made trying a project like this easy enough that I decided to give it a go. The result is <a href="https://github.com/oguzhanoztaskin/hybrid-vpn">Hybrid VPN</a>, which brings these functions together behind a single Android VPN service.</p>
+
+<h2 id="dns-filtering">DNS filtering</h2>
+
+<p>The first feature is a custom DNS resolver with built-in filtering. This is also the part I currently use the most: ad blocking is already good enough for my needs.</p>
+
+<p>An AdGuard sign-up form made me uncomfortable and nudged me toward building something I could configure myself.<sup id="fnref:adguard"><a href="#fn:adguard" class="footnote" rel="footnote" role="doc-noteref">1</a></sup></p>
+
+<p>I also wanted local DNS filtering without a separate app competing with Tailscale or OpenVPN for the VPN slot. Including it here lets me keep filtering alongside the other connections I need.</p>
+
+<h2 id="tailscale">Tailscale</h2>
+
+<p>I use Tailscale to connect to my devices, particularly the ones I leave at home. Its Android app needs the VPN slot too, so it was another obvious thing to include.</p>
+
+<p>One use case I like is KDE Connect. I use it for multimedia controls, and I can reach my devices over Tailscale. This is useful on Wi-Fi networks where devices on the same WLAN cannot communicate directly with each other.</p>
+
+<p>Hybrid VPN also includes support for connecting to multiple Tailscale networks, or <em>tailnets</em>, at once. I have not tested that feature yet, so for now it is something the app is designed to support rather than something I can personally vouch for.</p>
+
+<h2 id="openvpn">OpenVPN</h2>
+
+<p>OpenVPN lets me browse through another network. In my case, that network is my university’s: connecting through it allows me to access research papers using the university’s subscriptions, one of the intended purposes of the connection.</p>
+
+<p>This is another reason I wanted these tools together. Accessing a paper should not mean switching off my DNS filtering or losing access to my devices at home.</p>
+
+<h2 id="http-proxy">HTTP proxy</h2>
+
+<p>The fourth piece is HTTP proxy support. I use mitmproxy from time to time to inspect traffic and debug things, so I added a way to route traffic through it from the same app. Having that option here saves me from going through Android’s proxy settings or reaching for another app whenever I need it. Inspecting HTTPS contents still requires the client to trust mitmproxy’s certificate, and certificate pinning can prevent interception.</p>
+
+<h2 id="battery-and-development">Battery and development</h2>
+
+<p>Battery use mattered to me from the beginning. I asked the coding agent to run benchmarks, identify unnecessary work, and fix the issues it found. The repository includes <a href="https://github.com/oguzhanoztaskin/hybrid-vpn/blob/main/docs/benchmarks/results.md">benchmark notes and results</a>, covering things such as idle wake-ups, CPU use, and throughput. Those are useful indicators, but I do not have a measured battery-life improvement to claim.</p>
+
+<p>The entire app is vibe-coded. I have not read a single line of its code. I directed the development and tried the parts I needed, but that leaves a considerable gap in my understanding of how the implementation works.</p>
+
+<p>LLMs took away much of the work of getting this built. They also let development move faster than I could learn the details, especially with the limited time I had. Much of the challenge would otherwise have been learning Android, a platform I do not often develop for. Being able to get something useful out of the project anyway has been a good experience.</p>
+
+<h2 id="where-it-stands">Where it stands</h2>
+
+<p>There are features I have not tested and bugs I know about that I have not fixed. I plan to develop the app as I need it; for now, the ad-blocking feature is doing its job for me.</p>
+
+<p>I am sharing it as an experimental personal project, with all of those limitations. Building it myself has given me control over what I ask it to do, but I have not reviewed the code or established that it deserves more trust than the apps I wanted to replace.</p>
+
+<p>The source is on <a href="https://github.com/oguzhanoztaskin/hybrid-vpn">GitHub: oguzhanoztaskin/hybrid-vpn</a>. The app is provided without warranty, so please use it at your own discretion.</p>
+
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:adguard">
+      <p>AdGuard also offers <a href="https://adguard-dns.io/en/public-dns.html">free public DNS</a> with no account required. On Android 9 and later, you can set <code class="language-plaintext highlighter-rouge">dns.adguard-dns.com</code> as the Private DNS provider for provider-side ad and tracker filtering, without a VPN app. My reaction was to the sign-up form I encountered; here, I wanted filtering and custom rules handled locally in the same app as my other networking tools. <a href="#fnref:adguard" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>]]></content><author><name></name></author><category term="android" /><category term="vpn" /><category term="networking" /><category term="llm" /><summary type="html"><![CDATA[I made an Android VPN app because I was tired of managing separate apps for different networking needs. I wanted DNS filtering, access to my devices through Tailscale, OpenVPN for my university network, and an HTTP proxy for debugging. Sometimes I wanted more than one of these active at the same time.]]></summary></entry><entry><title type="html">A Zero-Knowledge Sudoku Prover</title><link href="https://oguzhanstech.com/2026/07/21/zk-sudoku-prover.html" rel="alternate" type="text/html" title="A Zero-Knowledge Sudoku Prover" /><published>2026-07-21T00:00:00+00:00</published><updated>2026-07-21T00:00:00+00:00</updated><id>https://oguzhanstech.com/2026/07/21/zk-sudoku-prover</id><content type="html" xml:base="https://oguzhanstech.com/2026/07/21/zk-sudoku-prover.html"><![CDATA[<p>In the previous posts we built up some machinery: the <a href="/2025/10/13/kzg-poly-commit-scheme.html">KZG Polynomial Commitment Scheme</a> for committing to a secret polynomial and proving its evaluations, and <a href="/2025/11/07/kzg-batching-in-plonk.html">KZG Batching in Plonk</a> for turning “this polynomial is zero on the whole domain $H$” into a single quotient check. I promised these would pay off in a later post where we do something more complicated. This is that post.</p>
 
 <p>The something is a real, working zero-knowledge prover for Sudoku: <em>I know a valid completion of this puzzle, and I won’t show it to you.</em> I built a complete polynomial-IOP argument system over BN254 in Rust (arkworks), blinded for zero knowledge, made non-interactive with Fiat–Shamir, and compiled the whole thing to WebAssembly so you can <a href="#try-it">play with it in your browser</a> at the end of this post.</p>
 

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" type="image/png" href="/favicon.png"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Hybrid VPN: A Swiss Army Knife for Android Networking | Oguzhan’s Tech</title>
+<meta name="generator" content="Jekyll v4.4.1" />
+<meta property="og:title" content="Hybrid VPN: A Swiss Army Knife for Android Networking" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="I made an Android VPN app because I was tired of managing separate apps for different networking needs. I wanted DNS filtering, access to my devices through Tailscale, OpenVPN for my university network, and an HTTP proxy for debugging. Sometimes I wanted more than one of these active at the same time." />
+<meta property="og:description" content="I made an Android VPN app because I was tired of managing separate apps for different networking needs. I wanted DNS filtering, access to my devices through Tailscale, OpenVPN for my university network, and an HTTP proxy for debugging. Sometimes I wanted more than one of these active at the same time." />
+<link rel="canonical" href="https://oguzhanstech.com/2026/10/29/hybrid-vpn.html" />
+<meta property="og:url" content="https://oguzhanstech.com/2026/10/29/hybrid-vpn.html" />
+<meta property="og:site_name" content="Oguzhan’s Tech" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2026-10-29T00:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Hybrid VPN: A Swiss Army Knife for Android Networking" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2026-10-29T00:00:00+00:00","datePublished":"2026-10-29T00:00:00+00:00","description":"I made an Android VPN app because I was tired of managing separate apps for different networking needs. I wanted DNS filtering, access to my devices through Tailscale, OpenVPN for my university network, and an HTTP proxy for debugging. Sometimes I wanted more than one of these active at the same time.","headline":"Hybrid VPN: A Swiss Army Knife for Android Networking","mainEntityOfPage":{"@type":"WebPage","@id":"https://oguzhanstech.com/2026/10/29/hybrid-vpn.html"},"url":"https://oguzhanstech.com/2026/10/29/hybrid-vpn.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css">
+  
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" integrity="sha384-vKruj+a13U8yHIkAyGgK1J3ArTLzrFGBbBc0tDp4ad/EyewESeXE/Iv67Aj8gKZ0" crossorigin="anonymous"><link type="application/atom+xml" rel="alternate" href="https://oguzhanstech.com/feed.xml" title="Oguzhan&apos;s Tech" /><!-- KaTeX JavaScript -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js" integrity="sha384-PwRUT/YqbnEjkZO0zZxNqcxACrXe+j766U2amXcgMg5457rve2Y7I6ZJSm2A0mS4" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+  
+          onload='
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: "$", right: "$", display: false},
+    {left: "\\(", right: "\\)", display: true},
+    {left: "\\[", right: "\\]", display: true} // use $$ in md, it is internally changed to \[ and \] 
+  ]
+});'></script>
+</head><body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Oguzhan&#39;s Tech</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/archive/">Archive</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper ">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Hybrid VPN: A Swiss Army Knife for Android Networking</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2026-10-29T00:00:00+00:00" itemprop="datePublished">Oct 29, 2026
+      </time></p><div class="post-tags"><a href="/archive/#android" class="tag-link">android</a><a href="/archive/#vpn" class="tag-link">vpn</a><a href="/archive/#networking" class="tag-link">networking</a><a href="/archive/#llm" class="tag-link">llm</a></div></header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>I made an Android VPN app because I was tired of managing separate apps for different networking needs. I wanted DNS filtering, access to my devices through Tailscale, OpenVPN for my university network, and an HTTP proxy for debugging. Sometimes I wanted more than one of these active at the same time.</p>
+
+<p>Android gets in the way here: <a href="https://developer.android.com/develop/connectivity/vpn#service">only one VPN service can be active per user or profile</a>. Starting another stops the existing one. A DNS-filtering app can therefore compete for the same slot as Tailscale or OpenVPN, even though I use them for very different purposes.</p>
+
+<p>There were other annoyances too: ads, apps I did not particularly trust, and the battery cost of keeping networking tools running. LLMs had made trying a project like this easy enough that I decided to give it a go. The result is <a href="https://github.com/oguzhanoztaskin/hybrid-vpn">Hybrid VPN</a>, which brings these functions together behind a single Android VPN service.</p>
+
+<h2 id="dns-filtering">DNS filtering</h2>
+
+<p>The first feature is a custom DNS resolver with built-in filtering. This is also the part I currently use the most: ad blocking is already good enough for my needs.</p>
+
+<p>An AdGuard sign-up form made me uncomfortable and nudged me toward building something I could configure myself.<sup id="fnref:adguard"><a href="#fn:adguard" class="footnote" rel="footnote" role="doc-noteref">1</a></sup></p>
+
+<p>I also wanted local DNS filtering without a separate app competing with Tailscale or OpenVPN for the VPN slot. Including it here lets me keep filtering alongside the other connections I need.</p>
+
+<h2 id="tailscale">Tailscale</h2>
+
+<p>I use Tailscale to connect to my devices, particularly the ones I leave at home. Its Android app needs the VPN slot too, so it was another obvious thing to include.</p>
+
+<p>One use case I like is KDE Connect. I use it for multimedia controls, and I can reach my devices over Tailscale. This is useful on Wi-Fi networks where devices on the same WLAN cannot communicate directly with each other.</p>
+
+<p>Hybrid VPN also includes support for connecting to multiple Tailscale networks, or <em>tailnets</em>, at once. I have not tested that feature yet, so for now it is something the app is designed to support rather than something I can personally vouch for.</p>
+
+<h2 id="openvpn">OpenVPN</h2>
+
+<p>OpenVPN lets me browse through another network. In my case, that network is my university’s: connecting through it allows me to access research papers using the university’s subscriptions, one of the intended purposes of the connection.</p>
+
+<p>This is another reason I wanted these tools together. Accessing a paper should not mean switching off my DNS filtering or losing access to my devices at home.</p>
+
+<h2 id="http-proxy">HTTP proxy</h2>
+
+<p>The fourth piece is HTTP proxy support. I use mitmproxy from time to time to inspect traffic and debug things, so I added a way to route traffic through it from the same app. Having that option here saves me from going through Android’s proxy settings or reaching for another app whenever I need it. Inspecting HTTPS contents still requires the client to trust mitmproxy’s certificate, and certificate pinning can prevent interception.</p>
+
+<h2 id="battery-and-development">Battery and development</h2>
+
+<p>Battery use mattered to me from the beginning. I asked the coding agent to run benchmarks, identify unnecessary work, and fix the issues it found. The repository includes <a href="https://github.com/oguzhanoztaskin/hybrid-vpn/blob/main/docs/benchmarks/results.md">benchmark notes and results</a>, covering things such as idle wake-ups, CPU use, and throughput. Those are useful indicators, but I do not have a measured battery-life improvement to claim.</p>
+
+<p>The entire app is vibe-coded. I have not read a single line of its code. I directed the development and tried the parts I needed, but that leaves a considerable gap in my understanding of how the implementation works.</p>
+
+<p>LLMs took away much of the work of getting this built. They also let development move faster than I could learn the details, especially with the limited time I had. Much of the challenge would otherwise have been learning Android, a platform I do not often develop for. Being able to get something useful out of the project anyway has been a good experience.</p>
+
+<h2 id="where-it-stands">Where it stands</h2>
+
+<p>There are features I have not tested and bugs I know about that I have not fixed. I plan to develop the app as I need it; for now, the ad-blocking feature is doing its job for me.</p>
+
+<p>I am sharing it as an experimental personal project, with all of those limitations. Building it myself has given me control over what I ask it to do, but I have not reviewed the code or established that it deserves more trust than the apps I wanted to replace.</p>
+
+<p>The source is on <a href="https://github.com/oguzhanoztaskin/hybrid-vpn">GitHub: oguzhanoztaskin/hybrid-vpn</a>. The app is provided without warranty, so please use it at your own discretion.</p>
+
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:adguard">
+      <p>AdGuard also offers <a href="https://adguard-dns.io/en/public-dns.html">free public DNS</a> with no account required. On Android 9 and later, you can set <code class="language-plaintext highlighter-rouge">dns.adguard-dns.com</code> as the Private DNS provider for provider-side ad and tracker filtering, without a VPN app. My reaction was to the sign-up form I encountered; here, I wanted filtering and custom rules handled locally in the same app as my other networking tools. <a href="#fnref:adguard" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+
+  </div><a class="u-url" href="/2026/10/29/hybrid-vpn.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Oguzhan&#39;s Tech</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Oguzhan&#39;s Tech</li><li><a class="u-email" href="mailto:hello@oguzhanstech.com">hello@oguzhanstech.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/oguzhanoztaskin"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">oguzhanoztaskin</span></a></li><li><a href="https://www.twitter.com/OguzhanOztaskin"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">OguzhanOztaskin</span></a></li><li><a href="/feed.xml"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#rss"></use></svg> <span>RSS</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>A blog about my hustles, which are mostly about cryptography, cyber security, or software projects. I fill in my posts/projects with the help of LLMs.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
